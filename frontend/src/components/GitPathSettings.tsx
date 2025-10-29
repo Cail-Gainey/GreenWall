@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { XIcon, SaveIcon, RefreshIcon } from '@heroicons/react/solid';
 import { useTranslations } from "../i18n";
 import { GetGitPath } from "../../wailsjs/go/main/App";
 
@@ -128,53 +129,49 @@ const GitPathSettings: React.FC<GitPathSettingsProps> = ({ onClose, onCheckAgain
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-			<div className="mx-4 w-full max-w-lg border border-black bg-white p-8">
+			<div className="mx-4 w-full max-w-lg border border-black dark:border-white bg-white dark:bg-gray-800 p-8">
 				<div className="mb-6 flex items-center justify-between">
-					<h2 className="text-2xl font-bold">{t("gitPathSettings.title")}</h2>
+					<h2 className="text-2xl font-bold text-black dark:text-white">{t("gitPathSettings.title")}</h2>
 					<button
 						onClick={onClose}
-						className="text-black hover:text-gray-600"
+						className="text-black dark:text-white hover:text-gray-600 dark:hover:text-gray-400"
 						aria-label={t("gitInstall.close")}
 					>
-						<svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-						</svg>
+						<XIcon className="h-6 w-6" />
 					</button>
 				</div>
 
 				<div className="space-y-6">
 					{/* 平台信息 */}
-					<div className="rounded-none border border-gray-300 bg-gray-50 p-3">
-						<p className="text-xs font-medium text-gray-700">
+					<div className="rounded-none border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-3">
+						<p className="text-xs font-medium text-gray-700 dark:text-gray-300">
 							{t("gitPathSettings.detectedOS")} <span className="font-bold">{os === 'windows' ? 'Windows' : os === 'mac' ? 'macOS' : 'Linux'}</span>
 						</p>
 					</div>
 
 					{/* 当前Git路径 */}
 					{isLoading ? (
-						<div className="text-sm text-gray-600">{t("gitPathSettings.loading")}</div>
+						<div className="text-sm text-gray-600 dark:text-gray-400">{t("gitPathSettings.loading")}</div>
 					) : (
 						<div className="space-y-2">
-							<label className="block text-sm font-medium text-black">
+							<label className="block text-sm font-medium text-black dark:text-white">
 								{t("gitPathSettings.currentPath")}
 							</label>
 							<div className="flex items-center gap-2">
-								<div className="flex-1 rounded-none border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+								<div className="flex-1 rounded-none border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
 									{currentGitPath || t("gitPathSettings.currentPathDefault")}
 								</div>
 								{currentGitPath && (
-									<button
-										onClick={() => {
-											setCustomGitPath("");
-											setSetPathResult(null);
-										}}
-										className="rounded-none border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-										title={t("gitPathSettings.clearInput")}
-									>
-										<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-											<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-										</svg>
-									</button>
+												<button
+													onClick={() => {
+														setCustomGitPath("");
+														setSetPathResult(null);
+													}}
+													className="rounded-none border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+													title={t("gitPathSettings.clearInput")}
+												>
+													<XIcon className="h-4 w-4" />
+												</button>
 								)}
 							</div>
 						</div>
@@ -182,7 +179,7 @@ const GitPathSettings: React.FC<GitPathSettingsProps> = ({ onClose, onCheckAgain
 
 					{/* 设置新路径 */}
 					<div className="space-y-2">
-						<label className="block text-sm font-medium text-black">
+						<label className="block text-sm font-medium text-black dark:text-white">
 							{t("gitPathSettings.newPath")}
 						</label>
 						<div className="flex gap-2">
@@ -194,28 +191,26 @@ const GitPathSettings: React.FC<GitPathSettingsProps> = ({ onClose, onCheckAgain
 									setSetPathResult(null);
 								}}
 								placeholder={getExamplePath()}
-								className="flex-1 rounded-none border border-black px-3 py-2 text-sm text-black focus:outline-none focus:ring-1 focus:ring-black"
+								className="flex-1 rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 px-3 py-2 text-sm text-black dark:text-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
 							/>
-							{customGitPath && (
-								<button
-									onClick={() => setCustomGitPath("")}
-									className="rounded-none border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-									title={t("gitPathSettings.clearInput")}
-								>
-									<svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-									</svg>
-								</button>
-							)}
+								{customGitPath && (
+									<button
+										onClick={() => setCustomGitPath("")}
+										className="rounded-none border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+										title={t("gitPathSettings.clearInput")}
+									>
+										<XIcon className="h-4 w-4" />
+									</button>
+								)}
 						</div>
-						<p className="text-xs text-gray-600">
+						<p className="text-xs text-gray-600 dark:text-gray-400">
 							💡 {getPlatformInstructions()}
 						</p>
 					</div>
 
 					{setPathResult && (
 						<p className={`text-sm ${
-							setPathResult.success ? "text-black" : "text-red-600"
+							setPathResult.success ? "text-black dark:text-white" : "text-red-600 dark:text-red-400"
 						}`}>
 							{setPathResult.message}
 						</p>
@@ -225,23 +220,25 @@ const GitPathSettings: React.FC<GitPathSettingsProps> = ({ onClose, onCheckAgain
 						<button
 							onClick={handleSetGitPath}
 							disabled={!customGitPath.trim() || isSettingPath}
-							className="border border-black bg-black px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:border-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed"
+							className="border border-black dark:border-white bg-black dark:bg-white px-6 py-2 text-sm font-medium text-white dark:text-black transition-colors hover:bg-gray-800 dark:hover:bg-gray-200 disabled:border-gray-300 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
 						>
+							<SaveIcon className="h-4 w-4" />
 							{isSettingPath ? t("gitPathSettings.setting") : t("gitPathSettings.setPath")}
 						</button>
 						<button
 							onClick={handleResetGitPath}
-							className="border border-black bg-white px-6 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100"
+							className="border border-black dark:border-white bg-white dark:bg-gray-700 px-6 py-2 text-sm font-medium text-black dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-2"
 						>
+							<RefreshIcon className="h-4 w-4" />
 							{t("gitPathSettings.reset")}
 						</button>
 					</div>
 
-					<div className="border-t border-black pt-6">
-						<p className="mb-3 text-sm text-black">
+					<div className="border-t border-black dark:border-white pt-6">
+						<p className="mb-3 text-sm text-black dark:text-white">
 							<b>{t("gitPathSettings.noteTitle")}</b>
 						</p>
-						<ul className="list-inside list-disc space-y-1 text-xs text-black">
+						<ul className="list-inside list-disc space-y-1 text-xs text-black dark:text-white">
 							<li>{t("gitPathSettings.noteEmpty")}</li>
 							<li>{t("gitPathSettings.noteCustom")}</li>
 							<li>{t("gitPathSettings.noteManualCheck")}</li>

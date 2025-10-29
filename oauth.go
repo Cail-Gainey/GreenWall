@@ -244,26 +244,26 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		zap.String("redirect_uri", redirectURI),
 		zap.String("scopes", config.Scopes))
 	
-	// 检查context是否有效
-	if a.ctx == nil {
-		LogError("应用context为nil，无法使用runtime方法")
-	} else {
+	// 优先使用Wails runtime，失败时才使用browser包
+	browserOpened := false
+	if a.ctx != nil {
 		LogInfo("使用Wails runtime打开浏览器")
 		runtime.BrowserOpenURL(a.ctx, authURL)
 		LogInfo("runtime.BrowserOpenURL调用完成")
+		browserOpened = true
+	} else {
+		LogError("应用context为nil，无法使用runtime方法")
 	}
 	
-	// 备用方案：使用browser包
-	LogInfo("尝试备用方案：使用browser包打开浏览器")
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		LogInfo("执行browser.OpenURL")
+	// 仅在runtime方法失败时使用备用方案
+	if !browserOpened {
+		LogInfo("使用browser包打开浏览器（备用方案）")
 		if err := browser.OpenURL(authURL); err != nil {
 			LogError("browser.OpenURL失败", zap.Error(err))
 		} else {
 			LogInfo("browser.OpenURL成功")
 		}
-	}()
+	}
 
 	timeout := time.After(3 * time.Minute)
 	

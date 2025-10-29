@@ -1,12 +1,11 @@
 import React from "react";
 import clsx from "clsx";
+import { DownloadIcon, UploadIcon, CheckCircleIcon, RefreshIcon, CloudIcon, PencilIcon, TrashIcon, TemplateIcon } from '@heroicons/react/solid';
 import { useTranslations } from "../i18n";
 import { CharacterSelector } from "./CharacterSelector";
 import { LoginButton } from "./LoginButton";
 
 type Props = {
-	year?: number;
-	onYearChange: (year: number) => void;
 	drawMode?: "pen" | "eraser";
 	onDrawModeChange: (mode: "pen" | "eraser") => void;
 	onReset?: () => void;
@@ -27,8 +26,6 @@ type Props = {
 };
 
 export const CalendarControls: React.FC<Props> = ({
-	year,
-	onYearChange,
 	drawMode,
 	onDrawModeChange,
 	onReset,
@@ -48,42 +45,7 @@ export const CalendarControls: React.FC<Props> = ({
 	isLoggingIn,
 }) => {
 	const { t } = useTranslations();
-	const [yearInput, setYearInput] = React.useState<string>(() =>
-		typeof year === "number" ? String(year) : "",
-	);
-
-	// 字符选择状态
-	const [showCharacterSelector, setShowCharacterSelector] = React.useState<boolean>(false);
-
-	React.useEffect(() => {
-		setYearInput(typeof year === "number" ? String(year) : "");
-	}, [year]);
-
-	const handleYearChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const { value } = event.target;
-		setYearInput(value);
-
-		if (value === "") {
-			return;
-		}
-
-		const parsed = Number(value);
-		const currentYear = new Date().getFullYear();
-		if (!Number.isNaN(parsed) && parsed >= 2008 && parsed <= currentYear) {
-			onYearChange(parsed);
-		}
-	};
-
-	const handleYearBlur = () => {
-		const parsed = Number(yearInput);
-		const currentYear = new Date().getFullYear();
-		const isValid =
-			yearInput !== "" && !Number.isNaN(parsed) && parsed >= 2008 && parsed <= currentYear;
-
-		if (!isValid) {
-			setYearInput(typeof year === "number" ? String(year) : "");
-		}
-	};
+	const [showCharacterSelector, setShowCharacterSelector] = React.useState(false);
 
 	const disableGenerateRepo =
 		!onGenerateRepo ||
@@ -110,141 +72,95 @@ export const CalendarControls: React.FC<Props> = ({
 	};
 
 	return (
-		<div className="flex w-full flex-col gap-4">
-			{/* 登录按钮区域 */}
-			<div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<LoginButton
-					userInfo={userInfo}
-					onLogin={onLogin}
-					onLogout={onLogout}
-					isLoggingIn={isLoggingIn}
-				/>
-			</div>
-
-			<div className="flex w-full flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
-				<div className="flex w-full flex-col space-y-2 sm:w-32 sm:flex-none">
-					<label htmlFor="year-input" className="text-sm font-medium text-black">
-						{t("labels.year")}
-					</label>
-					<input
-						id="year-input"
-						type="number"
-						min="2008"
-						max={new Date().getFullYear()}
-						value={yearInput}
-						onChange={handleYearChange}
-						onBlur={handleYearBlur}
-						className="w-full rounded-none border border-black px-3 py-2 transition-colors focus:border-black focus:outline-none focus:ring-2 focus:ring-black"
-					/>
-				</div>
-
-				<div className="flex w-full flex-col space-y-2 sm:w-auto">
-					<span className="text-sm font-medium text-black">{t("labels.drawMode")}</span>
-					<div className="grid gap-2 sm:flex sm:flex-nowrap sm:gap-2">
+		<div className="flex w-full flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded border border-gray-300 dark:border-gray-700">
+			{/* 功能按钮横向排列 */}
+			{/* 绘制模式 */}
+			<div className="flex items-center gap-2">
 						<button
 							type="button"
 							onClick={() => onDrawModeChange("pen")}
 							className={clsx(
-								"flex w-full items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium transition-all duration-200 sm:w-auto",
+								"flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-medium transition-all duration-200",
 								drawMode === "pen"
-									? "scale-105 transform bg-black text-white shadow-lg"
-									: "border border-black bg-white text-black hover:bg-gray-100",
+									? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+									: "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600",
 							)}
 							title={t("titles.pen")}
 						>
+							<PencilIcon className="h-4 w-4" />
 							{t("drawModes.pen")}
 						</button>
 						<button
 							type="button"
 							onClick={() => onDrawModeChange("eraser")}
 							className={clsx(
-								"flex w-full items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium transition-all duration-200 sm:w-auto",
+								"flex items-center justify-center gap-2 rounded px-3 py-2 text-sm font-medium transition-all duration-200",
 								drawMode === "eraser"
-									? "scale-105 transform bg-black text-white shadow-lg"
-									: "border border-black bg-white text-black hover:bg-gray-100",
+									? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+									: "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600",
 							)}
 							title={t("titles.eraser")}
 						>
+							<TrashIcon className="h-4 w-4" />
 							{t("drawModes.eraser")}
 						</button>
-					</div>
-				</div>
-
-				<div className="flex w-full flex-col space-y-2 sm:w-auto">
-					<span className="text-sm font-medium text-black">{t("characterSelector.characterTool")}</span>
-					<button
-						type="button"
-						onClick={handleCharacterButtonClick}
-						className={clsx(
-							"flex w-full items-center justify-center gap-2 rounded-none px-3 py-2 text-sm font-medium transition-all duration-200 sm:w-auto",
-							previewMode
-								? "scale-105 transform bg-orange-600 text-white shadow-lg"
-								: "border border-black bg-white text-black hover:bg-gray-100",
-						)}
-						title={previewMode ? t("characterSelector.cancelPreview") : t("characterSelector.character")}
-					>
-						{previewMode ? t("characterSelector.cancelPreview") : t("characterSelector.character")}
-					</button>
-				</div>
-
-				<div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:items-end">
-					<span className="text-sm font-medium text-black sm:invisible">{t("labels.dataActions")}</span>
-					<div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-						<button
-							type="button"
-							onClick={onExportContributions}
-							className="w-full rounded-none border border-black bg-white px-4 py-2 text-sm font-medium text-black transition-colors duration-200 hover:bg-gray-100 sm:w-auto"
-							title={t("titles.export")}
-						>
-							{t("buttons.export")}
-						</button>
-						<button
-							type="button"
-							onClick={onImportContributions}
-							className="w-full rounded-none border border-black bg-white px-4 py-2 text-sm font-medium text-black transition-colors duration-200 hover:bg-gray-100 sm:w-auto"
-							title={t("titles.import")}
-						>
-							{t("buttons.import")}
-						</button>
-					</div>
-				</div>
-
-				<div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:items-end">
-					<span className="text-sm font-medium text-black sm:invisible">{t("labels.actions")}</span>
-					<div className="flex w-full flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-						<button
-							type="button"
-							onClick={onFillAllGreen}
-							className="w-full rounded-none border border-black bg-white px-4 py-2 text-sm font-medium text-black transition-colors duration-200 hover:bg-gray-100 sm:w-auto"
-							title={t("titles.allGreen")}
-						>
-							{t("buttons.allGreen")}
-						</button>
-						<button
-							type="button"
-							onClick={onReset}
-							className="w-full rounded-none bg-black px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-gray-800 sm:w-auto"
-							title={t("titles.reset")}
-						>
-							{t("buttons.reset")}
-						</button>
-						<button
-							type="button"
-							onClick={handleGenerateRepo}
-							disabled={disableGenerateRepo}
-							className={clsx(
-								"w-full rounded-none px-4 py-2 text-sm font-medium transition-colors duration-200 sm:w-auto",
-								disableGenerateRepo
-									? "cursor-not-allowed border border-gray-400 bg-gray-200 text-gray-500"
-									: "border border-black bg-white text-black hover:bg-gray-100",
-							)}
-							title={t("titles.generate")}
-						>
-							{isGeneratingRepo ? t("buttons.generating") : t("buttons.generateRepo")}
-						</button>
-					</div>
-				</div>
 			</div>
+
+			{/* 字符工具 */}
+			<button
+					type="button"
+					onClick={handleCharacterButtonClick}
+					className={clsx(
+						"flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-medium transition-all duration-200",
+						previewMode
+							? "border-2 border-orange-500 dark:border-orange-400 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+							: "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600",
+					)}
+					title={previewMode ? t("characterSelector.cancelPreview") : t("characterSelector.character")}
+				>
+					<TemplateIcon className="h-4 w-4" />
+					{previewMode ? t("characterSelector.cancelPreview") : t("characterSelector.character")}
+				</button>
+
+			{/* 数据操作 */}
+			<button
+				type="button"
+				onClick={onExportContributions}
+				className="flex items-center justify-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+				title={t("titles.export")}
+			>
+				<DownloadIcon className="h-4 w-4" />
+				{t("buttons.export")}
+			</button>
+			<button
+				type="button"
+				onClick={onImportContributions}
+				className="flex items-center justify-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+				title={t("titles.import")}
+			>
+				<UploadIcon className="h-4 w-4" />
+				{t("buttons.import")}
+			</button>
+
+			{/* 操作按钮 */}
+			<button
+				type="button"
+				onClick={onFillAllGreen}
+				className="flex items-center justify-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+				title={t("titles.allGreen")}
+			>
+				<CheckCircleIcon className="h-4 w-4" />
+				{t("buttons.allGreen")}
+			</button>
+			<button
+				type="button"
+				onClick={onReset}
+				className="flex items-center justify-center gap-2 rounded border border-red-500 dark:border-red-600 bg-red-600 dark:bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 dark:hover:bg-red-700"
+				title={t("titles.reset")}
+			>
+				<RefreshIcon className="h-4 w-4" />
+				{t("buttons.reset")}
+			</button>
 
 			{/* 字符选择弹窗 */}
 			{showCharacterSelector && (

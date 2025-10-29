@@ -1,9 +1,13 @@
 import React from "react";
 import "./App.css";
+import { ThemeProvider } from 'next-themes';
+import { CogIcon } from '@heroicons/react/solid';
 import ContributionCalendar, { OneDay } from "./components/ContributionCalendar";
 import GitInstallSidebar from "./components/GitInstallSidebar";
 import GitPathSettings from "./components/GitPathSettings";
+import ThemeToggle from "./components/ThemeToggle";
 import { TranslationProvider, useTranslations, Language } from "./i18n";
+import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
 
 function App() {
 	const generateEmptyYearData = (year: number): OneDay[] => {
@@ -34,9 +38,11 @@ function App() {
 	const multiYearData: OneDay[] = generateMultiYearData();
 
 	return (
-		<TranslationProvider>
-			<AppLayout contributions={multiYearData}/>
-		</TranslationProvider>
+		<ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+			<TranslationProvider>
+				<AppLayout contributions={multiYearData}/>
+			</TranslationProvider>
+		</ThemeProvider>
 	);
 }
 
@@ -78,70 +84,81 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 		[t],
 	);
 
+	const handleGitHubClick = (e: React.MouseEvent) => {
+		e.preventDefault();
+		BrowserOpenURL("https://github.com/zmrlft/GreenWall");
+	};
+
 	return (
-		<div className="min-h-screen bg-white">
-			<div className="container mx-auto px-4 py-4 md:py-6">
+		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+			{/* 顶部导航栏 */}
+			<header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+				<div className="container mx-auto px-4 py-3">
+					<div className="flex items-center justify-between">
+						{/* 左侧：GitHub 和设置 */}
+						<div className="flex items-center gap-3">
+								<a
+									href="https://github.com/zmrlft/GreenWall"
+									onClick={handleGitHubClick}
+									aria-label="Open GreenWall repository on GitHub"
+									className="text-gray-700 dark:text-white transition-colors hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer"
+								>
+									<svg className="h-8 w-8" viewBox="0 0 24 24" aria-hidden="true">
+										<path
+											fill="currentColor"
+											d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.257.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.42-1.305.763-1.605-2.665-.303-5.466-1.335-5.466-5.935 0-1.312.47-2.382 1.236-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23A11.5 11.5 0 0 1 12 5.8a11.5 11.5 0 0 1 3.003.404c2.292-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.838 1.236 1.908 1.236 3.22 0 4.61-2.804 5.628-5.475 5.923.431.372.816 1.103.816 2.222 0 1.605-.014 2.897-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.297 24 12 24 5.37 18.63 0 12 0Z"
+										/>
+									</svg>
+								</a>
+								<button
+									onClick={() => setIsGitPathSettingsOpen(true)}
+									className="inline-flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+									aria-label="Git设置"
+								>
+									<CogIcon className="h-5 w-5" />
+								</button>
+							</div>
+
+							{/* 右侧：语言和主题 */}
+							<div className="flex items-center gap-3">
+								<div
+									className="inline-flex overflow-hidden rounded border border-gray-300 dark:border-gray-600"
+									role="group"
+									aria-label={t("labels.language")}
+								>
+									{languageOptions.map((option, index) => {
+										const isActive = language === option.value;
+										const borderClass = index === 0 ? "border-r border-gray-300 dark:border-gray-600" : "";
+										return (
+											<button
+												key={option.value}
+												type="button"
+												aria-pressed={isActive}
+												onClick={() => setLanguage(option.value)}
+												className={`px-4 py-2 text-sm font-medium transition-colors ${borderClass} ${
+													isActive
+														? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+														: "bg-white dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
+												}`}
+											>
+												{option.label}
+											</button>
+										);
+									})}
+								</div>
+								<ThemeToggle />
+							</div>
+						</div>
+					</div>
+			</header>
+
+			{/* 主内容区 */}
+			<div className="container mx-auto px-2 py-6">
 				<main className="flex justify-center">
-					<div className="rounded-none bg-white p-6 shadow-none">
+					<div className="w-full max-w-6xl">
 						<ContributionCalendar contributions={contributions}/>
 					</div>
 				</main>
-			</div>
-
-			<div className="fixed bottom-4 left-4 flex items-center gap-3">
-				<a
-					href="https://github.com/zmrlft/GreenWall"
-					target="_blank"
-					rel="noopener noreferrer"
-					aria-label="Open GreenWall repository on GitHub"
-					className="text-black transition-colors hover:text-gray-700"
-				>
-					<svg
-						className="h-7 w-7"
-						viewBox="0 0 24 24"
-						aria-hidden="true"
-					>
-						<path
-							fill="currentColor"
-							d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.257.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.42-1.305.763-1.605-2.665-.303-5.466-1.335-5.466-5.935 0-1.312.47-2.382 1.236-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23A11.5 11.5 0 0 1 12 5.8a11.5 11.5 0 0 1 3.003.404c2.292-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.838 1.236 1.908 1.236 3.22 0 4.61-2.804 5.628-5.475 5.923.431.372.816 1.103.816 2.222 0 1.605-.014 2.897-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.297 24 12 24 5.37 18.63 0 12 0Z"
-						/>
-					</svg>
-				</a>
-				<button
-					onClick={() => setIsGitPathSettingsOpen(true)}
-					className="inline-flex items-center justify-center rounded-none border border-black bg-white px-3 py-2 text-sm font-medium text-black transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
-					aria-label="Git设置"
-				>
-					<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-						<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-					</svg>
-				</button>
-				<div
-					className="inline-flex overflow-hidden rounded-none border border-black"
-					role="group"
-					aria-label={t("labels.language")}
-				>
-					{languageOptions.map((option, index) => {
-						const isActive = language === option.value;
-						const borderClass = index === 0 ? "border-r border-black" : "";
-						return (
-							<button
-								key={option.value}
-								type="button"
-								aria-pressed={isActive}
-								onClick={() => setLanguage(option.value)}
-								className={`px-3 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-black ${borderClass} ${
-									isActive
-										? "bg-black text-white"
-										: "bg-white text-black hover:bg-gray-100"
-								}`}
-							>
-								{option.label}
-							</button>
-						);
-					})}
-				</div>
 			</div>
 
 			{/* Git 安装提示 - 仅在未安装时显示 */}
@@ -149,13 +166,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 				<GitInstallSidebar onCheckAgain={handleCheckAgain} />
 			)}
 
-	{/* Git 路径设置弹窗 */}
-	{isGitPathSettingsOpen && (
-		<GitPathSettings
-			onClose={() => setIsGitPathSettingsOpen(false)}
-			onCheckAgain={handleCheckAgain}
-		/>
-	)}
+			{/* Git 路径设置弹窗 */}
+			{isGitPathSettingsOpen && (
+				<GitPathSettings
+					onClose={() => setIsGitPathSettingsOpen(false)}
+					onCheckAgain={handleCheckAgain}
+				/>
+			)}
 		</div>
 	);
 };

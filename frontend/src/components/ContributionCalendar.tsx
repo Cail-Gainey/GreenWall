@@ -1,7 +1,9 @@
 import React from "react";
 import clsx from "clsx";
+import { CloudIcon } from '@heroicons/react/solid';
 import styles from "./ContributionCalendar.module.scss";
 import { CalendarControls } from "./CalendarControls";
+import { LoginButton } from "./LoginButton";
 import { PushRepoDialog } from "./PushRepoDialog";
 import { GenerateRepo, ExportContributions, ImportContributions, LoadUserInfo, StartOAuthLogin, Logout, GetUserRepos, PushToGitHub } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
@@ -829,13 +831,55 @@ function ContributionCalendar({ contributions: originalContributions, className,
 
 	const renderedMonths = months.filter(Boolean) as React.ReactElement[];
 
+	// 年份输入状态
+	const [yearInput, setYearInput] = React.useState<string>(year.toString());
+
+	// 处理年份输入变化
+	const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setYearInput(e.target.value);
+	};
+
+	// 处理年份输入失焦
+	const handleYearBlur = () => {
+		const newYear = parseInt(yearInput, 10);
+		const currentYear = new Date().getFullYear();
+		if (!isNaN(newYear) && newYear >= 2008 && newYear <= currentYear) {
+			setYear(newYear);
+		} else {
+			setYearInput(year.toString());
+		}
+	};
+
+	// 同步 year 变化到 yearInput
+	React.useEffect(() => {
+		setYearInput(year.toString());
+	}, [year]);
+
+	const disableGenerateRepo = isGeneratingRepo || !userInfo;
+
 	return (
-        <div className={clsx(
-            "flex w-full px-4 py-3",
-            // 最大化：上下布局，并稍微加大间距
-            isMaximized ? "flex-col gap-6 overflow-x-hidden" : "flex-col lg:flex-row lg:items-start lg:justify-between gap-4 lg:gap-10",
-        )}>
-            <div className={clsx("w-full lg:flex-1", isMaximized ? "overflow-x-hidden" : "overflow-x-auto") }>
+        <div className="flex w-full flex-col gap-6">
+			{/* 控制按钮区 - 只包含功能按钮，不包含登录 */}
+			<CalendarControls
+				drawMode={drawMode}
+				onDrawModeChange={setDrawMode}
+				onReset={handleReset}
+				onFillAllGreen={handleFillAllGreen}
+				onExportContributions={handleExportContributions}
+				onImportContributions={handleImportContributions}
+				onStartCharacterPreview={handleStartCharacterPreview}
+				previewMode={previewMode}
+				onCancelCharacterPreview={handleCancelCharacterPreview}
+				userInfo={null}
+				onLogin={() => {}}
+				onLogout={() => {}}
+				isLoggingIn={false}
+				onGenerateRepo={undefined}
+				isGeneratingRepo={false}
+			/>
+
+			{/* 日历表格 */}
+            <div className={clsx("w-full", isMaximized ? "overflow-x-hidden" : "overflow-x-auto") }>
                 <div
                     {...rest}
                     ref={containerRef}
@@ -849,6 +893,22 @@ function ContributionCalendar({ contributions: originalContributions, className,
 					<span className={styles.week}>Fri</span>
 
 					<div className={styles.tiles}>{tiles}</div>
+					{/* 年份选择器 - 左下角 */}
+					<div style={{ gridColumn: '2 / 15', gridRow: '10', display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+						<label htmlFor="year-input" className="text-xs font-medium text-black dark:text-white whitespace-nowrap">
+							{t("labels.year")}
+						</label>
+						<input
+							id="year-input"
+							type="number"
+							min="2008"
+							max={new Date().getFullYear()}
+							value={yearInput}
+							onChange={handleYearChange}
+							onBlur={handleYearBlur}
+							className="w-20 rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 text-black dark:text-white px-2 py-1 text-xs transition-colors focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+						/>
+					</div>
 					<div className={styles.total}>
 						{t('calendar.totalContributions', { count: total, year })}
 					</div>
@@ -864,32 +924,30 @@ function ContributionCalendar({ contributions: originalContributions, className,
 				</div>
 			</div>
 
-			<div className={clsx(
-				"w-full",
-				// 最大化：放在下方并居中适度加宽；非最大化：右侧窄栏
-				isMaximized ? "max-w-3xl mx-auto" : "lg:max-w-sm",
-			)}>
-				<CalendarControls
-					year={year}
-					drawMode={drawMode}
-					onYearChange={setYear}
-					onDrawModeChange={setDrawMode}
-					onReset={handleReset}
-					onFillAllGreen={handleFillAllGreen}
-					onGenerateRepo={handleGenerateRepo}
-					isGeneratingRepo={isGeneratingRepo}
-					onExportContributions={handleExportContributions}
-					onImportContributions={handleImportContributions}
-					// 字符预览相关
-					onStartCharacterPreview={handleStartCharacterPreview}
-					previewMode={previewMode}
-					onCancelCharacterPreview={handleCancelCharacterPreview}
-					// 登录相关
+			{/* 登录和生成仓库区 */}
+			<div className="flex w-full flex-col gap-4">
+				<LoginButton
 					userInfo={userInfo}
 					onLogin={handleLogin}
 					onLogout={handleLogout}
 					isLoggingIn={isLoggingIn}
 				/>
+				
+				<button
+					type="button"
+					onClick={handleGenerateRepo}
+					disabled={disableGenerateRepo}
+					className={clsx(
+						"w-full flex items-center justify-center gap-2 rounded border px-6 py-3 text-base font-medium transition-colors",
+						disableGenerateRepo
+							? "cursor-not-allowed border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500"
+							: "border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700",
+					)}
+					title={t("titles.generate")}
+				>
+					<CloudIcon className="h-5 w-5" />
+					{isGeneratingRepo ? t("buttons.generating") : t("buttons.generateRepo")}
+				</button>
 			</div>
 
 			{/* 推送仓库弹窗 */}

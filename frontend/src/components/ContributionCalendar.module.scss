@@ -19,6 +19,12 @@
 	background: #ffffff;
 	box-shadow: none;
 
+	// 暗色模式样式
+	:global(.dark) & {
+		border-color: #ffffff;
+		background: #1f2937;
+	}
+
 	// 当窗口更大（例如最大化）时，自动放大格子与字体
 	@media (min-width: 1280px) {
 		--cell: 14px;
@@ -59,6 +65,10 @@
 	margin-bottom: -3px;
 	color: #000000;
 	font-weight: 500;
+
+	:global(.dark) & {
+		color: #ffffff;
+	}
 }
 
 .week {
@@ -68,6 +78,10 @@
 	margin-right: 3px;
 	color: #000000;
 	font-weight: 500;
+
+	:global(.dark) & {
+		color: #ffffff;
+	}
 
 	& + .week {
 		grid-row: 5;
@@ -103,22 +117,47 @@
 	&[data-level="0"] {
 		background: #EBEDF0;
 		border-color: rgba(235, 237, 240, 0.3);
+
+		:global(.dark) & {
+			background: #161b22;
+			border-color: rgba(48, 54, 61, 0.5);
+		}
 	}
 	&[data-level="1"] {
 		background: #9be9a8;
 		border-color: rgba(155, 233, 168, 0.3);
+
+		:global(.dark) & {
+			background: #0e4429;
+			border-color: rgba(14, 68, 41, 0.5);
+		}
 	}
 	&[data-level="2"] {
 		background: #40C463;
 		border-color: rgba(64, 196, 99, 0.3);
+
+		:global(.dark) & {
+			background: #006d32;
+			border-color: rgba(0, 109, 50, 0.5);
+		}
 	}
 	&[data-level="3"] {
 		background: #30a14e;
 		border-color: rgba(48, 161, 78, 0.3);
+
+		:global(.dark) & {
+			background: #26a641;
+			border-color: rgba(38, 166, 65, 0.5);
+		}
 	}
 	&[data-level="4"] {
 		background: #216e39;
 		border-color: rgba(33, 110, 57, 0.3);
+
+		:global(.dark) & {
+			background: #39d353;
+			border-color: rgba(57, 211, 83, 0.5);
+		}
 	}
 
 	&[data-future="true"] {
@@ -129,6 +168,11 @@
 		outline-offset: 0;
 		transform: none;
 		box-shadow: none;
+
+		:global(.dark) & {
+			background: #ffffff !important;
+			border-color: #ffffff !important;
+		}
 
 		&:hover {
 			outline: none;
@@ -144,6 +188,10 @@
 		transform: scale(1.2);
 		box-shadow: none;
 		z-index: 10;
+
+		:global(.dark) & {
+			outline-color: #ffffff;
+		}
 	}
 
 	// 预览状态样式
@@ -153,6 +201,12 @@
 		outline: 2px solid #ff6b35 !important;
 		outline-offset: 1px;
 		animation: pulse 1.5s infinite;
+
+		:global(.dark) & {
+			background: #39d353 !important;
+			border-color: rgba(57, 211, 83, 0.8) !important;
+			outline: 2px solid #ff8c42 !important;
+		}
 	}
 
 	@keyframes pulse {
@@ -174,6 +228,10 @@
 	color: #000000 !important;
 	font-size: 16px;
 	font-weight: bold;
+
+	:global(.dark) & {
+		color: #ffffff !important;
+	}
 }
 
 .legend {
@@ -189,6 +247,10 @@
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	color: #000000 !important;
+
+	:global(.dark) & {
+		color: #ffffff !important;
+	}
 
 	.tile {
 		cursor: default;

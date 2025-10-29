@@ -1,4 +1,5 @@
 import React from "react";
+import { UserCircleIcon, LogoutIcon } from '@heroicons/react/solid';
 import { useTranslations } from "../i18n";
 
 /**
@@ -23,41 +24,30 @@ export const LoginButton: React.FC<Props> = ({
 	if (userInfo) {
 		// 已登录状态
 		return (
-			<div className="flex w-full flex-col gap-2 sm:w-auto">
-				<div className="flex items-center gap-3 rounded-none border border-black bg-gray-50 px-4 py-2">
+			<div className="flex w-full flex-col gap-2">
+				<div className="flex items-center gap-3 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
 					{userInfo.avatarUrl ? (
 						<img
 							src={userInfo.avatarUrl}
 							alt={userInfo.username}
-							className="h-10 w-10 rounded-full border-2 border-green-600"
+							className="h-10 w-10 rounded-full border-2 border-green-600 dark:border-green-500"
 						/>
 					) : (
-						<svg
-							className="h-10 w-10 text-green-600"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-							/>
-						</svg>
+						<UserCircleIcon className="h-10 w-10 text-green-600 dark:text-green-500" />
 					)}
-					<div className="flex flex-col">
-						<span className="text-sm font-medium text-black">
+					<div className="flex flex-col flex-1">
+						<span className="text-sm font-medium text-gray-900 dark:text-white">
 							{userInfo.username}
 						</span>
-						<span className="text-xs text-gray-600">{userInfo.email}</span>
+						<span className="text-xs text-gray-600 dark:text-gray-400">{userInfo.email}</span>
 					</div>
 					<button
 						type="button"
 						onClick={onLogout}
-						className="ml-2 rounded-none border border-red-600 bg-white px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+						className="rounded border border-red-500 dark:border-red-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-1"
 						title={t("loginButton.logoutTitle")}
 					>
+						<LogoutIcon className="h-3 w-3" />
 						{t("loginButton.logout")}
 					</button>
 				</div>
@@ -67,14 +57,14 @@ export const LoginButton: React.FC<Props> = ({
 
 	// 未登录状态
 	return (
-		<div className="flex w-full flex-col gap-2 sm:w-auto">
+		<div className="flex w-full flex-col gap-2">
 			<button
 				type="button"
 				onClick={onLogin}
-				className={`flex w-full items-center justify-center gap-2 rounded-none border px-4 py-2 text-sm font-medium transition-colors sm:w-auto ${
+				className={`flex w-full items-center justify-center gap-2 rounded border px-6 py-3 text-base font-medium transition-colors ${
 					isLoggingIn
-						? "border-orange-600 bg-orange-50 text-orange-600 hover:bg-orange-100"
-						: "border-black bg-white text-black hover:bg-gray-100"
+						? "border-orange-500 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50"
+						: "border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
 				}`}
 				title={isLoggingIn ? t("loginButton.cancelLoginTitle") : t("loginButton.loginTitle")}
 			>
@@ -107,7 +97,7 @@ export const LoginButton: React.FC<Props> = ({
 				)}
 			</button>
 			{isLoggingIn && (
-				<p className="text-xs text-gray-600">
+				<p className="text-xs text-gray-600 dark:text-gray-400">
 					{t("loginButton.loginHint")}
 				</p>
 			)}

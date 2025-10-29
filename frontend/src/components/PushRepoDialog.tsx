@@ -1,4 +1,5 @@
 import React from "react";
+import { XIcon, CloudUploadIcon } from '@heroicons/react/solid';
 import { useTranslations } from "../i18n";
 
 type GitHubRepo = {
@@ -115,8 +116,8 @@ export const PushRepoDialog: React.FC<Props> = ({
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-			<div className="w-full max-w-2xl rounded-none border-2 border-black bg-white p-6 shadow-xl">
-				<h2 className="mb-4 text-2xl font-bold">{t("pushDialog.title")}</h2>
+			<div className="w-full max-w-2xl rounded-none border-2 border-black dark:border-white bg-white dark:bg-gray-800 p-6 shadow-xl">
+				<h2 className="mb-4 text-2xl font-bold text-black dark:text-white">{t("pushDialog.title")}</h2>
 
 				{/* 选择新建或现有仓库 */}
 				<div className="mb-6">
@@ -128,7 +129,7 @@ export const PushRepoDialog: React.FC<Props> = ({
 								onChange={() => setIsNewRepo(true)}
 								className="h-4 w-4"
 							/>
-							<span className="font-medium">{t("pushDialog.newRepo")}</span>
+							<span className="font-medium text-black dark:text-white">{t("pushDialog.newRepo")}</span>
 						</label>
 						<label className="flex items-center gap-2">
 							<input
@@ -137,7 +138,7 @@ export const PushRepoDialog: React.FC<Props> = ({
 								onChange={() => setIsNewRepo(false)}
 								className="h-4 w-4"
 							/>
-							<span className="font-medium">{t("pushDialog.existingRepo")}</span>
+							<span className="font-medium text-black dark:text-white">{t("pushDialog.existingRepo")}</span>
 						</label>
 					</div>
 				</div>
@@ -146,7 +147,7 @@ export const PushRepoDialog: React.FC<Props> = ({
 					<>
 						{/* 新建仓库 */}
 						<div className="mb-4">
-							<label className="mb-2 block text-sm font-medium">
+							<label className="mb-2 block text-sm font-medium text-black dark:text-white">
 								{t("pushDialog.repoName")}
 							</label>
 							<input
@@ -154,14 +155,14 @@ export const PushRepoDialog: React.FC<Props> = ({
 								value={repoName}
 								onChange={(e) => handleRepoNameChange(e.target.value)}
 								placeholder={t("pushDialog.repoNamePlaceholder")}
-								className="w-full rounded-none border border-black px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+								className="w-full rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 text-black dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
 							/>
 							{nameWarning && (
-								<p className="mt-2 text-xs text-orange-600">
+								<p className="mt-2 text-xs text-orange-600 dark:text-orange-400">
 									⚠️ {nameWarning}
 								</p>
 							)}
-							<p className="mt-1 text-xs text-gray-500">
+							<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
 								{t("pushDialog.nameRules")}
 							</p>
 						</div>
@@ -174,7 +175,7 @@ export const PushRepoDialog: React.FC<Props> = ({
 									onChange={(e) => setIsPrivate(e.target.checked)}
 									className="h-4 w-4"
 								/>
-								<span className="text-sm">{t("pushDialog.privateRepo")}</span>
+								<span className="text-sm text-black dark:text-white">{t("pushDialog.privateRepo")}</span>
 							</label>
 						</div>
 					</>
@@ -182,13 +183,13 @@ export const PushRepoDialog: React.FC<Props> = ({
 					<>
 						{/* 选择现有仓库 */}
 						<div className="mb-4">
-							<label className="mb-2 block text-sm font-medium">
+							<label className="mb-2 block text-sm font-medium text-black dark:text-white">
 								{t("pushDialog.selectRepo")}
 							</label>
 							<select
 								value={selectedRepo}
 								onChange={(e) => setSelectedRepo(e.target.value)}
-								className="w-full rounded-none border border-black px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+								className="w-full rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 text-black dark:text-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
 							>
 								<option value="">{t("pushDialog.selectRepoPlaceholder")}</option>
 								{userRepos.map((repo) => (
@@ -207,10 +208,10 @@ export const PushRepoDialog: React.FC<Props> = ({
 									onChange={(e) => setForcePush(e.target.checked)}
 									className="h-4 w-4"
 								/>
-								<span className="text-sm">{t("pushDialog.forcePush")}</span>
+								<span className="text-sm text-black dark:text-white">{t("pushDialog.forcePush")}</span>
 							</label>
 							{forcePush && (
-								<p className="mt-1 text-xs text-red-600">
+								<p className="mt-1 text-xs text-red-600 dark:text-red-400">
 									{t("pushDialog.forcePushWarning")}
 								</p>
 							)}
@@ -219,8 +220,8 @@ export const PushRepoDialog: React.FC<Props> = ({
 				)}
 
 				{/* 提交信息 */}
-				<div className="mb-6 rounded-none border border-gray-300 bg-gray-50 p-4">
-					<p className="text-sm text-gray-700">
+				<div className="mb-6 rounded-none border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 p-4">
+					<p className="text-sm text-gray-700 dark:text-gray-300">
 						<strong>{t("pushDialog.commitCount", { count: commitCount })}</strong>
 					</p>
 				</div>
@@ -230,15 +231,17 @@ export const PushRepoDialog: React.FC<Props> = ({
 					<button
 						onClick={onClose}
 						disabled={isLoading}
-						className="rounded-none border border-black bg-white px-6 py-2 font-medium text-black transition-colors hover:bg-gray-100 disabled:opacity-50"
+						className="rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 px-6 py-2 font-medium text-black dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 flex items-center gap-2"
 					>
+						<XIcon className="h-4 w-4" />
 						{t("pushDialog.cancel")}
 					</button>
 					<button
 						onClick={handleSubmit}
 						disabled={isLoading}
-						className="rounded-none border border-black bg-black px-6 py-2 font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+						className="rounded-none border border-black dark:border-white bg-black dark:bg-white px-6 py-2 font-medium text-white dark:text-black transition-colors hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 flex items-center gap-2"
 					>
+						<CloudUploadIcon className="h-4 w-4" />
 						{isLoading ? t("pushDialog.pushing") : t("pushDialog.push")}
 					</button>
 				</div>
