@@ -129,7 +129,7 @@ export const CalendarControls: React.FC<Props> = ({
 				className="flex items-center justify-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
 				title={t("titles.export")}
 			>
-				<DownloadIcon className="h-4 w-4" />
+				<UploadIcon className="h-4 w-4" />
 				{t("buttons.export")}
 			</button>
 			<button
@@ -138,7 +138,7 @@ export const CalendarControls: React.FC<Props> = ({
 				className="flex items-center justify-center gap-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
 				title={t("titles.import")}
 			>
-				<UploadIcon className="h-4 w-4" />
+				<DownloadIcon className="h-4 w-4" />
 				{t("buttons.import")}
 			</button>
 

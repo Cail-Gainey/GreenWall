@@ -74,12 +74,29 @@ export namespace main {
 	        this.filePath = source["filePath"];
 	    }
 	}
+	export class LanguageConfig {
+	    language: string;
+	    ratio: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new LanguageConfig(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.language = source["language"];
+	        this.ratio = source["ratio"];
+	    }
+	}
 	export class GenerateRepoRequest {
 	    year: number;
 	    githubUsername: string;
 	    githubEmail: string;
 	    repoName: string;
 	    contributions: ContributionDay[];
+	    language: string;
+	    languageConfigs: LanguageConfig[];
+	    multiLanguage: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new GenerateRepoRequest(source);
@@ -92,6 +109,9 @@ export namespace main {
 	        this.githubEmail = source["githubEmail"];
 	        this.repoName = source["repoName"];
 	        this.contributions = this.convertValues(source["contributions"], ContributionDay);
+	        this.language = source["language"];
+	        this.languageConfigs = this.convertValues(source["languageConfigs"], LanguageConfig);
+	        this.multiLanguage = source["multiLanguage"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -176,6 +196,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	export class UserInfo {
 	    username: string;
 	    email: string;

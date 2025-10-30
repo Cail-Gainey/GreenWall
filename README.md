@@ -1,42 +1,56 @@
-# README (English)
+# GreenWall 🎨
 
 > 中文: [README (中文)](README_zh.md)
 
-## How to use
-
-Make sure git is installed on your computer.
+**GreenWall** is a desktop application that helps you create artistic GitHub contribution graphs. Draw text, patterns, and emojis on your profile with multi-language repositories.
 
 ![app screenshot](/docs/images/app.png)
 
-Download the application, open it, and let your creativity flow! Generating a repository may take a while. After generation, copy the repository folder and enter it to continue.
+## ✨ Features
 
-## Next steps
+- 🎨 Draw letters, numbers, and emoji patterns on your contribution graph
+- 📊 Support multiple programming languages (Java, Python, Go, Rust, C++, JavaScript, TypeScript, Vue, etc.)
+- 🎯 Precisely control language statistics (based on GitHub Linguist algorithm)
+- 🔐 OAuth 2.0 GitHub integration
+- 🚀 Direct push to GitHub repositories
 
-1. Log in to your GitHub account and create an empty remote repository (do not select README, .gitignore or License).
-2. From the generated repository directory run the following commands to push your local repo to the remote:
+## 🚀 Quick Start
 
-```bash
-git remote add origin <remote-repo-url>
-git branch -M main
-git push -u origin main
-```
+1. Download and install GreenWall
+2. Log in with your GitHub account
+3. Draw patterns on the calendar
+4. Configure languages and ratios (optional)
+5. Generate and push to GitHub
 
-Note: After pushing, GitHub may take anywhere from 5 minutes to two days to show the contribution on your profile. You can make the repository private and enable contributions from private repositories in your GitHub contribution settings so others can't see the repo contents but your contribution activity will still be counted.
+## 💡 Tips
+
+- Set repositories to private and enable "Private contributions" in GitHub settings
+- GitHub may take 5 minutes to 2 days to update your contribution graph
+- Use "Force Push" if the repository already has content
 
 ![private setting screenshot](docs/images/privatesetting.png)
 
-## Documentation
+## 🛠️ Tech Stack
 
-- 📚 [Project Structure](docs/PROJECT_STRUCTURE.md) - Project organization and architecture
-- 🔧 [GitHub Actions Setup](docs/GITHUB_ACTIONS_SETUP.md) - CI/CD configuration guide
+- **Frontend**: React + TypeScript + Vite + TailwindCSS
+- **Backend**: Go + Wails v2
+- **Algorithm**: Based on GitHub Linguist (byte-based calculation)
 
-## Future features
+## 📄 License
 
-We may add support for creating repositories in custom languages. For example, if you want a Java repository, the tool would generate one and it would be reflected in your GitHub language statistics.
+MIT License
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=zmrlft/GreenWall&type=date&legend=top-left)](https://www.star-history.com/#zmrlft/GreenWall&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/svg?repos=Cail-Gainey/GreenWall&type=Date)](https://star-history.com/#Cail-Gainey/GreenWall&Date)
+
+## 👏 Credits
+
+Forked from [zmrlft/GreenWall](https://github.com/zmrlft/GreenWall) with enhancements:
+- Multi-language support
+- Language statistics control
+- Dark mode
+- OAuth 2.0 integration
 
 ## Disclaimer
 

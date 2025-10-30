@@ -23,13 +23,13 @@ jobs:
         include:
           - os: ubuntu-latest
             name: Linux
-            bin-name: green-wall
+            bin-name: GreenWall
           - os: windows-latest
             name: Windows
-            bin-name: green-wall.exe
+            bin-name: GreenWall.exe
           - os: macos-latest
             name: macOS
-            bin-name: green-wall
+            bin-name: Green
 
     runs-on: ${{ matrix.os }}
     
@@ -181,7 +181,7 @@ jobs:
           ls -la build/bin/ || echo "build/bin/ not found"
           echo "=== Current directory ==="
           pwd
-          find . -name "green-wall*" -o -name "*.exe" -o -name "*.app" 2>/dev/null || echo "No build artifacts found"
+          find . -name "GreenWall*" -o -name "*.exe" -o -name "*.app" 2>/dev/null || echo "No build artifacts found"
 
       - name: List build output (Windows)
         if: matrix.os == 'windows-latest'
@@ -194,33 +194,33 @@ jobs:
           echo "=== Current directory ==="
           Get-Location
           echo "=== Searching for build artifacts ==="
-          Get-ChildItem -Recurse -Include green-wall*.exe -ErrorAction SilentlyContinue
+          Get-ChildItem -Recurse -Include GreenWall*.exe -ErrorAction SilentlyContinue
 
       - name: Create macOS archive
         if: matrix.os == 'macos-latest'
         run: |
           cd build/bin
-          zip -r ../../green-wall-${{ matrix.name }}-${{ runner.arch }}.zip green-wall.app
+          zip -r ../../GreenWall-${{ matrix.name }}-${{ runner.arch }}.zip GreenWall.app
 
       - name: Create Linux archive
         if: matrix.os == 'ubuntu-latest'
         run: |
           cd build/bin
-          tar -czf ../../green-wall-${{ matrix.name }}-${{ runner.arch }}.tar.gz green-wall*
+          tar -czf ../../GreenWall-${{ matrix.name }}-${{ runner.arch }}.tar.gz GreenWall*
 
       - name: Create Windows archive
         if: matrix.os == 'windows-latest'
         shell: powershell
         run: |
           cd build/bin
-          Compress-Archive -Path green-wall*.exe -DestinationPath ../../green-wall-${{ matrix.name }}-${{ runner.arch }}.zip -Force
+          Compress-Archive -Path GreenWall*.exe -DestinationPath ../../GreenWall-${{ matrix.name }}-${{ runner.arch }}.zip -Force
 
       - name: Upload macOS artifact
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: green-wall-${{ matrix.name }}-${{ runner.arch }}
-          path: green-wall-${{ matrix.name }}-${{ runner.arch }}.zip
+          name: GreenWall-${{ matrix.name }}-${{ runner.arch }}
+          path: GreenWall-${{ matrix.name }}-${{ runner.arch }}.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -228,8 +228,8 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: green-wall-${{ matrix.name }}-${{ runner.arch }}
-          path: green-wall-${{ matrix.name }}-${{ runner.arch }}.tar.gz
+          name: GreenWall-${{ matrix.name }}-${{ runner.arch }}
+          path: GreenWall-${{ matrix.name }}-${{ runner.arch }}.tar.gz
           if-no-files-found: error
           retention-days: 30
 
@@ -237,8 +237,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: green-wall-${{ matrix.name }}-${{ runner.arch }}
-          path: green-wall-${{ matrix.name }}-${{ runner.arch }}.zip
+          name: GreenWall-${{ matrix.name }}-${{ runner.arch }}
+          path: GreenWall-${{ matrix.name }}-${{ runner.arch }}.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -262,7 +262,7 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: green-wall-*
+          pattern: GreenWall-*
 
       - name: Generate contributors list
         id: contrib
@@ -333,7 +333,7 @@ jobs:
         with:
           draft: true
           prerelease: false
-          files: green-wall-*/*
+          files: GreenWall-*/*
           body_path: ${{ steps.notes.outputs.body_path }}
           tag_name: ${{ env.RELEASE_TAG }}
 

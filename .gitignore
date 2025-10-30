@@ -1,44 +1,107 @@
 # 构建输出
-build/bin
-build/darwin
+build/bin/
+build/darwin/
+build/windows/
+build/linux/
 *.app
 *.exe
 *.dmg
 *.pkg
+*.deb
+*.rpm
 
 # 前端
-node_modules
-frontend/dist
-frontend/.vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
 # OAuth配置文件（包含敏感信息）
 oauth_config.json
+.env
+.env.local
+.env.*.local
 
 # 日志文件
 logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# 用户数据
+# 用户数据和缓存
 user.json
+.cache/
+*.db
+*.sqlite
+*.sqlite3
 
-# IDE
+# IDE和编辑器
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.sublime-*
 
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
 
 # 临时文件
 tmp/
 temp/
 *.tmp
+*.bak
+*.swp
+*.swo
 
 # Go
 *.test
 *.out
 vendor/
+go.work
+go.work.sum
+*.cover
+coverage.txt
+coverage.html
+
+# Wails
+wails.json.bak
+.wails/
+frontend/wailsjs/
+
+# Git
+*.orig
+*.rej
+.git-rewrite/

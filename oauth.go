@@ -293,7 +293,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		
 		return &LoginResponse{
 			Success: false,
-			Message: fmt.Sprintf("OAuth认证失败", err),
+			Message: fmt.Sprintf("OAuth认证失败: %v", err),
 		}, nil
 
 	case <-timeout:

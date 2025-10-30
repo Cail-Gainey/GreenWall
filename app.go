@@ -45,17 +45,25 @@ func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
+// GetSupportedLanguagesAPI 获取支持的编程语言列表
+func (a *App) GetSupportedLanguagesAPI() []map[string]string {
+	return GetSupportedLanguages()
+}
+
 type ContributionDay struct {
 	Date  string `json:"date"`
 	Count int    `json:"count"`
 }
 
 type GenerateRepoRequest struct {
-	Year           int               `json:"year"`
-	GithubUsername string            `json:"githubUsername"`
-	GithubEmail    string            `json:"githubEmail"`
-	RepoName       string            `json:"repoName"`
-	Contributions  []ContributionDay `json:"contributions"`
+	Year            int               `json:"year"`
+	GithubUsername  string            `json:"githubUsername"`
+	GithubEmail     string            `json:"githubEmail"`
+	RepoName        string            `json:"repoName"`
+	Contributions   []ContributionDay `json:"contributions"`
+	Language        string            `json:"language"`         // 单语言模式(向后兼容)
+	LanguageConfigs []LanguageConfig  `json:"languageConfigs"`  // 多语言配置
+	MultiLanguage   bool              `json:"multiLanguage"`    // 是否启用多语言模式
 }
 
 type GenerateRepoResponse struct {
@@ -168,10 +176,39 @@ func (a *App) getGitCommand() string {
 
 // GenerateRepo creates a git repository whose commit history mirrors the given contribution calendar.
 func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, error) {
-	LogInfo("开始生成仓库", 
-		zap.Int("contributions_count", len(req.Contributions)),
-		zap.String("username", req.GithubUsername),
-		zap.Int("year", req.Year))
+	// 处理语言配置
+	var languageConfigs []LanguageConfig
+	if req.MultiLanguage && len(req.LanguageConfigs) > 0 {
+		// 多语言模式
+		languageConfigs = req.LanguageConfigs
+		
+		// 验证语言配置
+		if err := validateLanguageConfigs(languageConfigs); err != nil {
+			LogError("语言配置验证失败", zap.Error(err))
+			return nil, fmt.Errorf("invalid language configs: %w", err)
+		}
+		
+		// 标准化语言配置
+		languageConfigs = normalizeLanguageConfigs(languageConfigs)
+		
+		LogInfo("开始生成仓库(多语言模式)", 
+			zap.Int("contributions_count", len(req.Contributions)),
+			zap.String("username", req.GithubUsername),
+			zap.Int("year", req.Year),
+			zap.Int("language_count", len(languageConfigs)))
+	} else {
+		// 单语言模式(向后兼容)
+		language := req.Language
+		if language == "" {
+			language = "markdown"
+		}
+		languageConfigs = []LanguageConfig{{Language: language, Ratio: 100}}
+		LogInfo("开始生成仓库(单语言模式)", 
+			zap.Int("contributions_count", len(req.Contributions)),
+			zap.String("username", req.GithubUsername),
+			zap.Int("year", req.Year),
+			zap.String("language", language))
+	}
 	
 	if len(req.Contributions) == 0 {
 		LogError("生成仓库失败：无贡献数据")
@@ -226,11 +263,29 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
 
 	LogInfo("创建仓库目录", zap.String("path", repoPath), zap.String("repo_name", repoName))
 
+	// 生成多语言README
 	readmePath := filepath.Join(repoPath, "README.md")
-	readmeContent := fmt.Sprintf("# %s\n\nGenerated with https://github.com/zmrlft/GreenWall.\n", repoName)
+	readmeContent := generateMultiLanguageReadme(repoName, languageConfigs)
 	if err := os.WriteFile(readmePath, []byte(readmeContent), 0o644); err != nil {
 		LogError("写入README失败", zap.Error(err))
 		return nil, fmt.Errorf("write README: %w", err)
+	}
+	
+	// 创建所有语言的额外文件
+	allAdditionalFiles := mergeAdditionalFiles(repoName, languageConfigs)
+	
+	for filePath, content := range allAdditionalFiles {
+		fullPath := filepath.Join(repoPath, filePath)
+		// 确保目录存在
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0o755); err != nil {
+			LogError("创建目录失败", zap.String("path", filepath.Dir(fullPath)), zap.Error(err))
+			return nil, fmt.Errorf("create directory: %w", err)
+		}
+		if err := os.WriteFile(fullPath, []byte(content), 0o644); err != nil {
+			LogError("写入文件失败", zap.String("path", fullPath), zap.Error(err))
+			return nil, fmt.Errorf("write file %s: %w", filePath, err)
+		}
+		LogInfo("创建额外文件", zap.String("file", filePath))
 	}
 
 	LogInfo("初始化Git仓库", zap.String("username", username), zap.String("email", email))
@@ -266,8 +321,6 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
     fmt.Fprintf(&stream, "blob\nmark :1\n")
     fmt.Fprintf(&stream, "data %d\n%s\n", len(readmeContent), readmeContent)
 
-    // Prepare to accumulate activity log content across commits
-    var activityBuf bytes.Buffer
     nextMark := 2
     totalCommits := 0
     branch := "refs/heads/main"
@@ -278,18 +331,25 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
             return nil, fmt.Errorf("invalid date %q: %w", day.Date, err)
         }
         for i := 0; i < day.Count; i++ {
-            // Update activity content in-memory
-            entry := fmt.Sprintf("%s commit %d\n", day.Date, i+1)
-            activityBuf.WriteString(entry)
+            // 根据比例选择语言
+            selectedLang := selectLanguageByRatio(languageConfigs, totalCommits)
+            template := GetLanguageTemplate(LanguageType(selectedLang))
+            
+            // 使用语言模板生成代码内容
+            codeContent := template.GenerateCode(day.Date, i+1, day.Count)
 
-            // Emit blob for activity.log
+            // Emit blob for code file
             fmt.Fprintf(&stream, "blob\nmark :%d\n", nextMark)
-            act := activityBuf.Bytes()
-            fmt.Fprintf(&stream, "data %d\n", len(act))
-            stream.Write(act)
+            fmt.Fprintf(&stream, "data %d\n", len(codeContent))
+            stream.WriteString(codeContent)
             stream.WriteString("\n")
 
-            // Emit commit that points to README (:1) and activity (:nextMark)
+            // 获取代码文件路径（相对于仓库根目录）
+            codeFilePath := getCodeFilePath("", LanguageType(selectedLang), day.Date, i+1)
+            // 只需要相对路径，去掉开头的路径分隔符
+            codeFilePath = strings.TrimPrefix(codeFilePath, string(filepath.Separator))
+
+            // Emit commit that points to README (:1) and code file (:nextMark)
             commitTime := parsedDate.Add(time.Duration(i) * time.Second)
             secs := commitTime.Unix()
             tz := commitTime.Format("-0700")
@@ -299,7 +359,7 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
             fmt.Fprintf(&stream, "committer %s <%s> %d %s\n", username, email, secs, tz)
             fmt.Fprintf(&stream, "data %d\n%s\n", len(msg), msg)
             fmt.Fprintf(&stream, "M 100644 :1 %s\n", filepath.Base(readmePath))
-            fmt.Fprintf(&stream, "M 100644 :%d activity.log\n", nextMark)
+            fmt.Fprintf(&stream, "M 100644 :%d %s\n", nextMark, codeFilePath)
 
             nextMark++
             totalCommits++
@@ -445,46 +505,11 @@ func sanitiseRepoName(input string) string {
 	return input
 }
 
-func appendToFile(path, content string) error {
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if _, err := f.WriteString(content); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (a *App) runGitCommand(dir string, args ...string) error {
 	gitCmd := a.getGitCommand()
 	cmd := exec.Command(gitCmd, args...)
 	cmd.Dir = dir
 	configureCommand(cmd, true)
-
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("git %s: %w (%s)", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
-	}
-
-	return nil
-}
-
-func (a *App) runGitCommandWithEnv(dir string, extraEnv map[string]string, args ...string) error {
-	gitCmd := a.getGitCommand()
-	cmd := exec.Command(gitCmd, args...)
-	cmd.Dir = dir
-	configureCommand(cmd, true)
-
-	env := os.Environ()
-	for key, value := range extraEnv {
-		env = append(env, fmt.Sprintf("%s=%s", key, value))
-	}
-	cmd.Env = env
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

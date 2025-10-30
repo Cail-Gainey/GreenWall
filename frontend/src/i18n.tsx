@@ -127,6 +127,21 @@ type TranslationDict = {
 		nameWarningInvalid: string;
 		emptyNameError: string;
 		invalidNameError: string;
+		language: string;
+		languageHint: string;
+		multiLanguageMode: string;
+		multiLanguageModeHint: string;
+		languageConfig: string;
+		totalRatio: string;
+		addLanguage: string;
+		deleteLanguage: string;
+		lockedTooltip: string;
+		unlockedTooltip: string;
+		ratioWarning: string;
+		autoDistributeTip: string;
+		ratioDistributeTip: string;
+		noLanguageError: string;
+		zeroRatioError: string;
 	};
 	loginButton: {
 		logout: string;
@@ -278,6 +293,21 @@ const translations: Record<Language, TranslationDict> = {
 			nameWarningInvalid: "Contains invalid characters, will be converted to: {{name}}",
 			emptyNameError: "Please enter or select a repository name",
 			invalidNameError: "Invalid repository name. Please use letters, numbers, hyphens, underscores, or dots",
+			language: "Programming Language",
+			languageHint: "Select the programming language for the generated repository",
+			multiLanguageMode: "Enable Multi-Language Mode",
+			multiLanguageModeHint: "Mix multiple programming languages with custom ratios",
+			languageConfig: "Language Configuration",
+			totalRatio: "Total Ratio",
+			addLanguage: "+ Add Language",
+			deleteLanguage: "Delete",
+			lockedTooltip: "Locked - Won't be auto-adjusted",
+			unlockedTooltip: "Auto-distributed - Will adjust based on other languages",
+			ratioWarning: "⚠️ Warning: Total ratio exceeds 100%, please adjust",
+			autoDistributeTip: "💡 After modifying ratio, it will be locked (🔒), and other unlocked languages will auto-adjust",
+			ratioDistributeTip: "📊 System will distribute commits to different languages by ratio",
+			noLanguageError: "Please add at least one language",
+			zeroRatioError: "Total ratio cannot be 0",
 		},
 		loginButton: {
 			logout: "Logout",
@@ -426,6 +456,21 @@ const translations: Record<Language, TranslationDict> = {
 			nameWarningInvalid: "包含不允许的字符，将自动转换为: {{name}}",
 			emptyNameError: "请输入或选择仓库名称",
 			invalidNameError: "仓库名无效，请使用字母、数字、连字符、下划线或点",
+			language: "编程语言",
+			languageHint: "选择生成仓库使用的编程语言",
+			multiLanguageMode: "启用多语言模式",
+			multiLanguageModeHint: "混合使用多种编程语言，自定义每种语言的比例",
+			languageConfig: "语言配置",
+			totalRatio: "总比例",
+			addLanguage: "+ 添加语言",
+			deleteLanguage: "删除",
+			lockedTooltip: "已锁定 - 不会自动调整",
+			unlockedTooltip: "自动分配 - 会根据其他语言调整",
+			ratioWarning: "⚠️ 警告：总比例超过100%，建议调整",
+			autoDistributeTip: "💡 修改比例后会自动锁定（🔒），其他未锁定的语言会自动调整",
+			ratioDistributeTip: "📊 系统会按比例循环分配提交到不同语言",
+			noLanguageError: "请至少添加一种语言",
+			zeroRatioError: "语言比例总和不能为0",
 		},
 		loginButton: {
 			logout: "退出",

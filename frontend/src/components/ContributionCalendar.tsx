@@ -501,6 +501,9 @@ function ContributionCalendar({ contributions: originalContributions, className,
 		isPrivate: boolean;
 		forcePush: boolean;
 		commitCount: number;
+		language: string;
+		multiLanguage?: boolean;
+		languageConfigs?: Array<{language: string; ratio: number}>;
 	}) => {
 		if (!userInfo) {
 			console.error('[Push] 用户未登录');
@@ -526,6 +529,9 @@ function ContributionCalendar({ contributions: originalContributions, className,
 				githubEmail: userInfo.email.trim(),
 				repoName: params.repoName,
 				contributions: pendingContributions,
+				language: params.language || "",
+				multiLanguage: params.multiLanguage || false,
+				languageConfigs: params.languageConfigs || [],
 			});
 			
 			console.log('[Push] 生成仓库请求:', {
@@ -836,7 +842,15 @@ function ContributionCalendar({ contributions: originalContributions, className,
 
 	// 处理年份输入变化
 	const handleYearChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		setYearInput(e.target.value);
+		const value = e.target.value;
+		setYearInput(value);
+		
+		// 实时验证并更新year状态（用于上下箭头和直接输入）
+		const newYear = parseInt(value, 10);
+		const currentYear = new Date().getFullYear();
+		if (!isNaN(newYear) && newYear >= 2008 && newYear <= currentYear) {
+			setYear(newYear);
+		}
 	};
 
 	// 处理年份输入失焦
@@ -848,6 +862,14 @@ function ContributionCalendar({ contributions: originalContributions, className,
 		} else {
 			setYearInput(year.toString());
 		}
+	};
+
+	// 处理回车键
+	const handleYearKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+		if (e.key === 'Enter') {
+			e.currentTarget.blur(); // 触发失焦事件
+		}
+		// 上下箭头的实时同步已由onChange处理
 	};
 
 	// 同步 year 变化到 yearInput
@@ -906,6 +928,7 @@ function ContributionCalendar({ contributions: originalContributions, className,
 							value={yearInput}
 							onChange={handleYearChange}
 							onBlur={handleYearBlur}
+							onKeyDown={handleYearKeyDown}
 							className="w-20 rounded-none border border-black dark:border-white bg-white dark:bg-gray-700 text-black dark:text-white px-2 py-1 text-xs transition-colors focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
 						/>
 					</div>

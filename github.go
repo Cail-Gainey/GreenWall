@@ -32,12 +32,12 @@ type CreateRepoRequest struct {
 
 // PushRepoRequest 推送仓库请求
 type PushRepoRequest struct {
-	RepoPath      string `json:"repoPath"`
-	RepoName      string `json:"repoName"`
-	IsNewRepo     bool   `json:"isNewRepo"`
-	IsPrivate     bool   `json:"isPrivate"`
-	ForcePush     bool   `json:"forcePush"`
-	CommitCount   int    `json:"commitCount"`
+	RepoPath    string `json:"repoPath"`
+	RepoName    string `json:"repoName"`
+	IsNewRepo   bool   `json:"isNewRepo"`
+	IsPrivate   bool   `json:"isPrivate"`
+	ForcePush   bool   `json:"forcePush"`
+	CommitCount int    `json:"commitCount"`
 }
 
 // PushRepoResponse 推送仓库响应
@@ -50,7 +50,7 @@ type PushRepoResponse struct {
 // GetUserRepos 获取用户的所有仓库
 func (a *App) GetUserRepos() ([]GitHubRepo, error) {
 	LogInfo("获取用户仓库列表")
-	
+
 	if a.userInfo == nil || a.userInfo.Token == "" {
 		LogError("获取仓库列表失败：用户未登录")
 		return nil, fmt.Errorf("未登录")
@@ -118,41 +118,41 @@ func (a *App) VerifyGitHubToken() error {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
-	
+
 	if resp.StatusCode == 401 {
 		LogError("Token无效或已过期")
 		return fmt.Errorf("token无效或已过期")
 	}
-	
+
 	if resp.StatusCode == 403 {
 		LogError("Token权限不足", zap.String("response", string(body)))
 		return fmt.Errorf("token权限不足")
 	}
-	
+
 	if resp.StatusCode != 200 {
 		LogError("Token验证失败", zap.Int("status_code", resp.StatusCode), zap.String("response", string(body)))
 		return fmt.Errorf("验证失败: %d", resp.StatusCode)
 	}
 
 	LogInfo("Token验证成功")
-	
+
 	// 检查token的scopes
 	scopes := resp.Header.Get("X-OAuth-Scopes")
 	LogInfo("Token权限", zap.String("scopes", scopes))
-	
+
 	// 检查是否有repo权限
 	if !strings.Contains(scopes, "repo") && !strings.Contains(scopes, "public_repo") {
 		LogWarn("Token缺少repo权限", zap.String("scopes", scopes))
 		return fmt.Errorf("token缺少'repo'权限，无法创建仓库。\n\n请按以下步骤操作：\n1. 更新 oauth_config.json 中的 scopes 为 'user:email repo'\n2. 退出登录\n3. 重新登录并授权")
 	}
-	
+
 	return nil
 }
 
 // CreateGitHubRepo 在GitHub上创建新仓库
 func (a *App) CreateGitHubRepo(name string, isPrivate bool) (*GitHubRepo, error) {
 	LogInfo("开始创建GitHub仓库", zap.String("name", name), zap.Bool("private", isPrivate))
-	
+
 	if a.userInfo == nil || a.userInfo.Token == "" {
 		LogError("创建仓库失败：用户未登录")
 		return nil, fmt.Errorf("未登录")
@@ -208,7 +208,7 @@ func (a *App) CreateGitHubRepo(name string, isPrivate bool) (*GitHubRepo, error)
 	}
 
 	LogInfo("收到GitHub响应", zap.Int("status_code", resp.StatusCode))
-	
+
 	if resp.StatusCode != http.StatusCreated {
 		LogError("创建仓库失败", zap.Int("status_code", resp.StatusCode), zap.String("response", string(body)))
 		return nil, fmt.Errorf("创建仓库失败 %d: %s", resp.StatusCode, string(body))
@@ -232,7 +232,7 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 		zap.Bool("private", req.IsPrivate),
 		zap.Bool("force", req.ForcePush),
 		zap.Int("commits", req.CommitCount))
-	
+
 	if a.userInfo == nil || a.userInfo.Token == "" {
 		LogError("推送失败：用户未登录")
 		return &PushRepoResponse{
@@ -242,7 +242,7 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 	}
 
 	LogInfo("用户信息", zap.String("username", a.userInfo.Username))
-	
+
 	// 验证token
 	if err := a.VerifyGitHubToken(); err != nil {
 		LogError("Token验证失败", zap.Error(err))
@@ -255,7 +255,7 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 	// 如果是新仓库，先在GitHub上创建
 	var repoURL string
 	var actualRepoName string // 实际创建的仓库名（可能与请求的不同）
-	
+
 	if req.IsNewRepo {
 		LogInfo("步骤1: 创建新仓库", zap.String("name", req.RepoName), zap.Bool("private", req.IsPrivate))
 		repo, err := a.CreateGitHubRepo(req.RepoName, req.IsPrivate)
@@ -276,7 +276,7 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 	}
 
 	// 配置远程仓库 - 使用实际的仓库名
-	remoteURL := fmt.Sprintf("https://%s@github.com/%s/%s.git", 
+	remoteURL := fmt.Sprintf("https://%s@github.com/%s/%s.git",
 		a.userInfo.Token, a.userInfo.Username, actualRepoName)
 	LogInfo("步骤2: 配置远程仓库", zap.String("repo", fmt.Sprintf("%s/%s", a.userInfo.Username, actualRepoName)))
 
@@ -289,24 +289,49 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 	}
 
 	// 推送到GitHub
-	pushArgs := []string{"push", "origin", "main"}
+	var pushArgs []string
 	if req.ForcePush {
-		pushArgs = []string{"push", "-f", "origin", "main"}
-		LogInfo("步骤3: 强制推送到origin/main")
+		// 强制推送：使用 --force 完全覆盖远程分支
+		// 不需要先fetch，直接强制推送本地的main分支到远程
+		pushArgs = []string{"push", "--force", "origin", "main"}
+		LogInfo("步骤3: 强制推送到origin/main（完全覆盖远程仓库）")
 	} else {
+		// 普通推送：设置上游分支
+		pushArgs = []string{"push", "-u", "origin", "main"}
 		LogInfo("步骤3: 推送到origin/main")
 	}
 
 	if err := a.runGitCommand(req.RepoPath, pushArgs...); err != nil {
 		LogError("推送失败", zap.Error(err))
-		// 清理临时文件
-		LogInfo("清理临时文件", zap.String("path", req.RepoPath))
-		os.RemoveAll(req.RepoPath)
-		
-		return &PushRepoResponse{
-			Success: false,
-			Message: fmt.Sprintf("推送失败: %v\n\n请检查：\n1. 仓库是否存在\n2. 是否有推送权限\n3. 网络连接是否正常", err),
-		}, nil
+
+		// 如果是强制推送失败，尝试更强力的方式
+		if req.ForcePush {
+			LogInfo("尝试使用更强力的强制推送方式")
+			// 先删除远程分支，再推送
+			a.runGitCommand(req.RepoPath, "push", "origin", "--delete", "main")
+			// 重新推送
+			if err := a.runGitCommand(req.RepoPath, "push", "-u", "origin", "main"); err != nil {
+				LogError("强制推送仍然失败", zap.Error(err))
+				// 清理临时文件
+				LogInfo("清理临时文件", zap.String("path", req.RepoPath))
+				os.RemoveAll(req.RepoPath)
+
+				return &PushRepoResponse{
+					Success: false,
+					Message: fmt.Sprintf("强制推送失败: %v\n\n请检查：\n1. 仓库是否存在\n2. 是否有推送权限\n3. 分支保护规则是否阻止了强制推送", err),
+				}, nil
+			}
+			LogInfo("使用删除重建方式推送成功")
+		} else {
+			// 清理临时文件
+			LogInfo("清理临时文件", zap.String("path", req.RepoPath))
+			os.RemoveAll(req.RepoPath)
+
+			return &PushRepoResponse{
+				Success: false,
+				Message: fmt.Sprintf("推送失败: %v\n\n请检查：\n1. 仓库是否存在\n2. 是否有推送权限\n3. 网络连接是否正常\n\n提示：如果仓库已有内容，请勾选'强制推送'选项", err),
+			}, nil
+		}
 	}
 
 	LogInfo("推送成功")
