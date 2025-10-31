@@ -164,6 +164,20 @@ type TranslationDict = {
 		english: string;
 		chinese: string;
 	};
+	tutorial: {
+		title: string;
+		close: string;
+		previous: string;
+		next: string;
+		finish: string;
+		goToStep: string;
+		stepCounter: string;
+		keyboardHint: string;
+		steps: Array<{
+			title: string;
+			content: string;
+		}>;
+	};
 };
 
 const translations: Record<Language, TranslationDict> = {
@@ -329,6 +343,42 @@ const translations: Record<Language, TranslationDict> = {
 		languageSwitcher: {
 			english: "English",
 			chinese: "中文",
+		},
+		tutorial: {
+			title: "User Guide",
+			close: "Close",
+			previous: "Previous",
+			next: "Next",
+			finish: "Get Started",
+			goToStep: "Go to step",
+			stepCounter: "Step {{current}} of {{total}}",
+			keyboardHint: "Use ← → arrow keys to navigate",
+			steps: [
+				{
+					title: "Welcome to GreenWall!",
+					content: "GreenWall is a powerful tool that helps you customize your GitHub contribution calendar. You can draw patterns, write text, or create any design you want on your contribution graph.\n\nLet's learn how to use it!"
+				},
+				{
+					title: "Drawing Tools",
+					content: "Use the drawing tools in the control panel to customize your contribution calendar:\n\n• Pen Mode: Click or drag on the calendar to add contributions\n• Eraser Mode: Click or drag to remove contributions\n• Character Tool: Quickly draw letters, numbers, or symbols\n\nYou can switch between different years to create multi-year patterns."
+				},
+				{
+					title: "Quick Actions",
+					content: "The action buttons help you quickly manage your contribution data:\n\n• All Green: Fill the entire calendar with contributions\n• Reset: Clear all customized contribution data\n• Export: Save your design as a JSON file\n• Import: Load a previously saved design"
+				},
+				{
+					title: "Generate Repository",
+					content: "Once you're satisfied with your design, click the 'Generate Repo' button:\n\n1. Enter your GitHub username and email\n2. Choose a repository name\n3. Select programming language (supports 20+ languages)\n4. Enable multi-language mode for mixed language projects\n5. Click 'Generate Repo' to create a local Git repository"
+				},
+				{
+					title: "Push to GitHub",
+					content: "After generating the repository, you can push it to GitHub:\n\n1. Use 'GitHub Quick Login' to authenticate (optional but recommended)\n2. Choose to create a new repository or select an existing one\n3. Configure repository settings (public/private)\n4. Click 'Start Push' to upload to GitHub\n\nYour custom contribution calendar will appear on your GitHub profile!"
+				},
+				{
+					title: "Settings & Tips",
+					content: "Additional features to enhance your experience:\n\n• Git Path Settings: Configure custom Git executable path\n• Theme Toggle: Switch between light and dark mode\n• Language Switcher: Choose between English and Chinese\n• Multi-year Support: Create patterns spanning multiple years"
+				}
+			]
 		},
 	},
 	zh: {
@@ -505,6 +555,42 @@ const translations: Record<Language, TranslationDict> = {
 		languageSwitcher: {
 			english: "English",
 			chinese: "中文",
+		},
+		tutorial: {
+			title: "使用教程",
+			close: "关闭",
+			previous: "上一步",
+			next: "下一步",
+			finish: "开始使用",
+			goToStep: "跳转到步骤",
+			stepCounter: "第 {{current}} 步，共 {{total}} 步",
+			keyboardHint: "使用 ← → 方向键导航",
+			steps: [
+				{
+					title: "欢迎使用 GreenWall!",
+					content: "GreenWall 是一个强大的工具，帮助您自定义 GitHub 贡献日历。您可以在贡献图上绘制图案、书写文字或创建任何您想要的设计。\n\n让我们开始学习如何使用它！"
+				},
+				{
+					title: "绘图工具",
+					content: "使用控制面板中的绘图工具来自定义您的贡献日历：\n\n• 画笔模式：点击或拖动日历来添加贡献\n• 橡皮擦模式：点击或拖动来移除贡献\n• 字符工具：快速绘制字母、数字或符号\n\n您可以切换不同年份来创建跨年图案。"
+				},
+				{
+					title: "快捷操作",
+					content: "操作按钮帮助您快速管理贡献数据：\n\n• 全绿：用贡献填充整个日历\n• 重置：清除所有自定义贡献数据\n• 导出：将您的设计保存为 JSON 文件\n• 导入：加载之前保存的设计"
+				},
+				{
+					title: "生成仓库",
+					content: "当您对设计满意后，点击「生成仓库」按钮：\n\n1. 输入您的 GitHub 用户名和邮箱\n2. 选择仓库名称\n3. 选择编程语言（支持 20+ 种语言）\n4. 启用多语言模式以混合多种语言项目\n5. 点击「生成仓库」创建本地 Git 仓库"
+				},
+				{
+					title: "推送到 GitHub",
+					content: "生成仓库后，您可以将其推送到 GitHub：\n\n1. 使用「GitHub 快捷登录」进行身份验证（可选但推荐）\n2. 选择创建新仓库或选择现有仓库\n3. 配置仓库设置（公开/私有）\n4. 点击「开始推送」上传到 GitHub\n\n您的自定义贡献日历将出现在您的 GitHub 个人资料中！"
+				},
+				{
+					title: "设置与技巧",
+					content: "增强您使用体验的额外功能：\n\n• Git 路径设置：配置自定义 Git 可执行文件路径\n• 主题切换：在亮色和暗色模式之间切换\n• 语言切换：在中英文之间选择\n• 多年支持：创建跨越多年的图案"
+				}
+			]
 		},
 	},
 };

@@ -1,11 +1,12 @@
 import React from "react";
 import "./App.css";
 import { ThemeProvider } from 'next-themes';
-import { CogIcon } from '@heroicons/react/solid';
+import { CogIcon, QuestionMarkCircleIcon } from '@heroicons/react/solid';
 import ContributionCalendar, { OneDay } from "./components/ContributionCalendar";
 import GitInstallSidebar from "./components/GitInstallSidebar";
 import GitPathSettings from "./components/GitPathSettings";
 import ThemeToggle from "./components/ThemeToggle";
+import Tutorial from "./components/Tutorial";
 import { TranslationProvider, useTranslations, Language } from "./i18n";
 import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
 
@@ -55,6 +56,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 	const [isGitInstalled, setIsGitInstalled] = React.useState<boolean | null>(null);
 	const [gitVersion, setGitVersion] = React.useState<string>("");
 	const [isGitPathSettingsOpen, setIsGitPathSettingsOpen] = React.useState<boolean>(false);
+	const [isTutorialOpen, setIsTutorialOpen] = React.useState<boolean>(false);
 
 	const checkGit = React.useCallback(async () => {
 		try {
@@ -95,7 +97,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 			<header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
 				<div className="container mx-auto px-4 py-3">
 					<div className="flex items-center justify-between">
-						{/* 左侧：GitHub 和设置 */}
+						{/* 左侧：GitHub、教程和设置 */}
 						<div className="flex items-center gap-3">
 								<a
 									href="https://github.com/zmrlft/GreenWall"
@@ -110,6 +112,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 										/>
 									</svg>
 								</a>
+								<button
+									onClick={() => setIsTutorialOpen(true)}
+									className="inline-flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
+									aria-label={t('tutorial.title')}
+									title={t('tutorial.title')}
+								>
+									<QuestionMarkCircleIcon className="h-5 w-5" />
+								</button>
 								<button
 									onClick={() => setIsGitPathSettingsOpen(true)}
 									className="inline-flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
@@ -172,6 +182,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
 					onClose={() => setIsGitPathSettingsOpen(false)}
 					onCheckAgain={handleCheckAgain}
 				/>
+			)}
+
+			{/* 使用教程弹窗 */}
+			{isTutorialOpen && (
+				<Tutorial onClose={() => setIsTutorialOpen(false)} />
 			)}
 		</div>
 	);
