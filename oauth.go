@@ -164,10 +164,12 @@ func (a *App) loadOAuthConfig() (*OAuthConfig, error) {
 // StartOAuthLogin 启动OAuth登录流程
 func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 	LogInfo("启动OAuth登录流程")
+	runtime.EventsEmit(a.ctx, "login-progress", "正在初始化登录...")
 	
 	config, err := a.loadOAuthConfig()
 	if err != nil {
 		LogError("加载OAuth配置失败", zap.Error(err))
+		runtime.EventsEmit(a.ctx, "login-progress", "登录失败")
 		return &LoginResponse{
 			Success: false,
 			Message: fmt.Sprintf("加载OAuth配置失败: %v\n\n请确保oauth_config.json文件存在并配置正确。", err),
@@ -183,6 +185,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		LogInfo("收到OAuth回调请求", zap.String("path", r.URL.Path), zap.String("query", r.URL.RawQuery))
+		runtime.EventsEmit(a.ctx, "login-progress", "正在处理授权回调...")
 		
 		code := r.URL.Query().Get("code")
 		if code == "" {
@@ -194,19 +197,23 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		}
 
 		LogInfo("OAuth回调：获取到授权码", zap.String("code_prefix", code[:min(10, len(code))]+"..."))
+		runtime.EventsEmit(a.ctx, "login-progress", "正在换取访问令牌...")
 
 		accessToken, err := a.exchangeCodeForToken(code, config.ClientID, config.ClientSecret, redirectURI)
 		if err != nil {
 			LogError("OAuth回调：换取token失败", zap.Error(err))
+			runtime.EventsEmit(a.ctx, "login-progress", "换取令牌失败")
 			errorChan <- fmt.Errorf("换取access token失败: %w", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "<html><body><h1>授权失败</h1><p>%s</p></body></html>", err.Error())
 			return
 		}
 
+		runtime.EventsEmit(a.ctx, "login-progress", "正在获取用户信息...")
 		userInfo, err := a.fetchGitHubUserInfo(accessToken)
 		if err != nil {
 			LogError("OAuth回调：获取用户信息失败", zap.Error(err))
+			runtime.EventsEmit(a.ctx, "login-progress", "获取用户信息失败")
 			errorChan <- fmt.Errorf("获取用户信息失败: %w", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprintf(w, "<html><body><h1>获取用户信息失败</h1><p>%s</p></body></html>", err.Error())
@@ -214,6 +221,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		}
 
 		LogInfo("OAuth回调：登录成功", zap.String("username", userInfo.Username))
+		runtime.EventsEmit(a.ctx, "login-progress", "登录成功！")
 		resultChan <- userInfo
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -244,6 +252,8 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		zap.String("redirect_uri", redirectURI),
 		zap.String("scopes", config.Scopes))
 	
+	runtime.EventsEmit(a.ctx, "login-progress", "正在打开浏览器进行授权...")
+	
 	// 优先使用Wails runtime，失败时才使用browser包
 	browserOpened := false
 	if a.ctx != nil {
@@ -265,6 +275,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		}
 	}
 
+	runtime.EventsEmit(a.ctx, "login-progress", "等待浏览器授权...")
 	timeout := time.After(3 * time.Minute)
 	
 	select {
@@ -290,6 +301,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		a.oauthServer.Shutdown(ctx)
+		runtime.EventsEmit(a.ctx, "login-progress", "登录失败")
 		
 		return &LoginResponse{
 			Success: false,
@@ -300,6 +312,7 @@ func (a *App) StartOAuthLogin() (*LoginResponse, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		a.oauthServer.Shutdown(ctx)
+		runtime.EventsEmit(a.ctx, "login-progress", "登录超时")
 		
 		return &LoginResponse{
 			Success: false,

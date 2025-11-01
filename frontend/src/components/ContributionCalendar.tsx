@@ -8,7 +8,7 @@ import { PushRepoDialog } from "./PushRepoDialog";
 import { GenerateRepo, ExportContributions, ImportContributions, LoadUserInfo, StartOAuthLogin, Logout, GetUserRepos, PushToGitHub } from "../../wailsjs/go/main/App";
 import { main } from "../../wailsjs/go/models";
 import { useTranslations } from "../i18n";
-import { WindowIsMaximised, WindowIsFullscreen } from "../../wailsjs/runtime/runtime";
+import { WindowIsMaximised, WindowIsFullscreen, EventsOn, EventsOff } from "../../wailsjs/runtime/runtime";
 import { getPatternById, gridToBoolean } from "../data/characterPatterns";
 
 // 根据贡献数量计算level
@@ -74,6 +74,8 @@ function ContributionCalendar({ contributions: originalContributions, className,
 	const [showPushDialog, setShowPushDialog] = React.useState<boolean>(false);
 	const [userRepos, setUserRepos] = React.useState<any[]>([]);
 	const [isPushing, setIsPushing] = React.useState<boolean>(false);
+	const [pushProgress, setPushProgress] = React.useState<string>("");
+	const [loginProgress, setLoginProgress] = React.useState<string>("");
 	// 保存待生成的贡献数据
 	const [pendingContributions, setPendingContributions] = React.useState<any[]>([]);
 
@@ -94,6 +96,34 @@ function ContributionCalendar({ contributions: originalContributions, className,
 			}
 		};
 		loadUser();
+	}, []);
+
+	// 监听推送进度事件
+	React.useEffect(() => {
+		const handlePushProgress = (message: string) => {
+			console.log('[Push Progress]', message);
+			setPushProgress(message);
+		};
+
+		EventsOn('push-progress', handlePushProgress);
+
+		return () => {
+			EventsOff('push-progress');
+		};
+	}, []);
+
+	// 监听登录进度事件
+	React.useEffect(() => {
+		const handleLoginProgress = (message: string) => {
+			console.log('[Login Progress]', message);
+			setLoginProgress(message);
+		};
+
+		EventsOn('login-progress', handleLoginProgress);
+
+		return () => {
+			EventsOff('login-progress');
+		};
 	}, []);
 	
 	// 加载用户仓库列表
@@ -290,6 +320,7 @@ function ContributionCalendar({ contributions: originalContributions, className,
 			alert("登录失败: " + errorMsg);
 		} finally {
 			setIsLoggingIn(false);
+			setLoginProgress("");
 		}
 	};
 
@@ -566,19 +597,23 @@ function ContributionCalendar({ contributions: originalContributions, className,
 			
 			if (pushResult.success) {
 				console.log('[Push] ✓ 推送成功');
+				setPushProgress("推送成功！");
 				alert(`推送成功！\n\n${pushResult.message}\n\n仓库地址：${pushResult.repoUrl}`);
 				setShowPushDialog(false);
 				setPendingContributions([]);
 			} else {
 				console.error('[Push] ✗ 推送失败:', pushResult.message);
+				setPushProgress("推送失败");
 				alert(`推送失败：\n\n${pushResult.message}`);
 			}
 		} catch (error) {
 			console.error('[Push] ✗ 异常:', error);
 			const message = error instanceof Error ? error.message : String(error);
+			setPushProgress("操作失败");
 			alert(`操作失败: ${message}`);
 		} finally {
 			setIsPushing(false);
+			setPushProgress("");
 			console.log('[Push] 推送流程结束');
 		}
 	};
@@ -954,6 +989,7 @@ function ContributionCalendar({ contributions: originalContributions, className,
 					onLogin={handleLogin}
 					onLogout={handleLogout}
 					isLoggingIn={isLoggingIn}
+					loginProgress={loginProgress}
 				/>
 				
 				<button
@@ -982,6 +1018,7 @@ function ContributionCalendar({ contributions: originalContributions, className,
 					commitCount={pendingContributions.length}
 					userRepos={userRepos}
 					isLoading={isPushing}
+					progressMessage={pushProgress}
 				/>
 			)}
 		</div>

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"go.uber.org/zap"
 )
 
@@ -291,14 +292,16 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 	// 推送到GitHub
 	var pushArgs []string
 	if req.ForcePush {
-		// 强制推送：使用 --force 完全覆盖远程分支
-		// 不需要先fetch，直接强制推送本地的main分支到远程
-		pushArgs = []string{"push", "--force", "origin", "main"}
-		LogInfo("步骤3: 强制推送到origin/main（完全覆盖远程仓库）")
+		// 强制推送：使用 --force-with-lease 更安全，如果失败则使用 --force
+		// --force-with-lease 会检查远程分支是否被其他人修改
+		pushArgs = []string{"push", "--force-with-lease", "origin", "main"}
+		LogInfo("步骤3: 强制推送到origin/main（使用--force-with-lease）")
+		runtime.EventsEmit(a.ctx, "push-progress", "正在强制推送到远程仓库...")
 	} else {
 		// 普通推送：设置上游分支
 		pushArgs = []string{"push", "-u", "origin", "main"}
 		LogInfo("步骤3: 推送到origin/main")
+		runtime.EventsEmit(a.ctx, "push-progress", "正在推送到远程仓库...")
 	}
 
 	if err := a.runGitCommand(req.RepoPath, pushArgs...); err != nil {
@@ -306,26 +309,42 @@ func (a *App) PushToGitHub(req PushRepoRequest) (*PushRepoResponse, error) {
 
 		// 如果是强制推送失败，尝试更强力的方式
 		if req.ForcePush {
-			LogInfo("尝试使用更强力的强制推送方式")
-			// 先删除远程分支，再推送
-			a.runGitCommand(req.RepoPath, "push", "origin", "--delete", "main")
-			// 重新推送
-			if err := a.runGitCommand(req.RepoPath, "push", "-u", "origin", "main"); err != nil {
-				LogError("强制推送仍然失败", zap.Error(err))
-				// 清理临时文件
-				LogInfo("清理临时文件", zap.String("path", req.RepoPath))
-				os.RemoveAll(req.RepoPath)
+			LogInfo("--force-with-lease 失败，尝试使用 --force")
+			runtime.EventsEmit(a.ctx, "push-progress", "第一次尝试失败，使用更强力的推送方式...")
+			
+			// 尝试使用 --force（更强力但不检查远程状态）
+			if err := a.runGitCommand(req.RepoPath, "push", "--force", "origin", "main"); err != nil {
+				LogError("--force 推送失败，尝试删除重建方式", zap.Error(err))
+				runtime.EventsEmit(a.ctx, "push-progress", "第二次尝试失败，尝试删除远程分支后重新推送...")
+				
+				// 最后的备用方案：先删除远程分支，再推送
+				LogInfo("尝试删除远程分支并重新推送")
+				a.runGitCommand(req.RepoPath, "push", "origin", "--delete", "main")
+				
+				// 重新推送
+				if err := a.runGitCommand(req.RepoPath, "push", "-u", "origin", "main"); err != nil {
+					LogError("所有强制推送方式均失败", zap.Error(err))
+					runtime.EventsEmit(a.ctx, "push-progress", "推送失败")
+					// 清理临时文件
+					LogInfo("清理临时文件", zap.String("path", req.RepoPath))
+					os.RemoveAll(req.RepoPath)
 
-				return &PushRepoResponse{
-					Success: false,
-					Message: fmt.Sprintf("强制推送失败: %v\n\n请检查：\n1. 仓库是否存在\n2. 是否有推送权限\n3. 分支保护规则是否阻止了强制推送", err),
-				}, nil
+					return &PushRepoResponse{
+						Success: false,
+						Message: fmt.Sprintf("强制推送失败: %v\n\n请检查：\n1. 仓库是否存在\n2. 是否有推送权限\n3. 分支保护规则是否阻止了强制推送\n4. 网络连接是否正常", err),
+					}, nil
+				}
+				LogInfo("使用删除重建方式推送成功")
+				runtime.EventsEmit(a.ctx, "push-progress", "使用删除重建方式推送成功！")
+			} else {
+				LogInfo("使用 --force 推送成功")
+				runtime.EventsEmit(a.ctx, "push-progress", "使用强制推送成功！")
 			}
-			LogInfo("使用删除重建方式推送成功")
 		} else {
 			// 清理临时文件
 			LogInfo("清理临时文件", zap.String("path", req.RepoPath))
 			os.RemoveAll(req.RepoPath)
+			runtime.EventsEmit(a.ctx, "push-progress", "推送失败")
 
 			return &PushRepoResponse{
 				Success: false,
