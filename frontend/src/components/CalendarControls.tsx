@@ -5,9 +5,14 @@ import { useTranslations } from "../i18n";
 import { CharacterSelector } from "./CharacterSelector";
 import { LoginButton } from "./LoginButton";
 
+type BrushIntensity = 1 | 2 | 3 | 4;
+type PatternIntensity = 1 | 2 | 3 | 4 | 'random';
+
 type Props = {
 	drawMode?: "pen" | "eraser";
 	onDrawModeChange: (mode: "pen" | "eraser") => void;
+	brushIntensity?: BrushIntensity;
+	onBrushIntensityChange?: (intensity: BrushIntensity) => void;
 	onReset?: () => void;
 	onFillAllGreen?: () => void;
 	onGenerateRepo?: () => void;
@@ -15,7 +20,7 @@ type Props = {
 	onExportContributions?: () => void;
 	onImportContributions?: () => void;
 	// 字符预览相关
-	onStartCharacterPreview?: (char: string) => void;
+	onStartCharacterPreview?: (char: string, intensity: PatternIntensity) => void;
 	previewMode?: boolean;
 	onCancelCharacterPreview?: () => void;
 	// 登录相关
@@ -28,6 +33,8 @@ type Props = {
 export const CalendarControls: React.FC<Props> = ({
 	drawMode,
 	onDrawModeChange,
+	brushIntensity = 4,
+	onBrushIntensityChange,
 	onReset,
 	onFillAllGreen,
 	onGenerateRepo,
@@ -57,9 +64,9 @@ export const CalendarControls: React.FC<Props> = ({
 		onGenerateRepo();
 	};
 
-	const handleCharacterSelect = (char: string) => {
+	const handleCharacterSelect = (char: string, intensity: PatternIntensity) => {
 		if (onStartCharacterPreview) {
-			onStartCharacterPreview(char);
+			onStartCharacterPreview(char, intensity);
 		}
 	};
 
@@ -105,6 +112,40 @@ export const CalendarControls: React.FC<Props> = ({
 							{t("drawModes.eraser")}
 						</button>
 			</div>
+
+			{/* 画笔强度选择器 - 仅在画笔模式下显示 */}
+			{drawMode === "pen" && onBrushIntensityChange && (
+				<div className="flex items-center gap-2 border-l border-gray-300 dark:border-gray-600 pl-3">
+					<span className="text-xs text-gray-600 dark:text-gray-400">{t("brushIntensity.label")}</span>
+					<div className="flex items-center gap-1">
+						{([1, 2, 3, 4] as BrushIntensity[]).map((intensity) => {
+							// 使用与日历一致的 GitHub 颜色
+							const colors: Record<BrushIntensity, string> = {
+								1: '#9be9a8',
+								2: '#40C463',
+								3: '#30a14e',
+								4: '#216e39'
+							};
+							
+							return (
+								<button
+									key={intensity}
+									type="button"
+									onClick={() => onBrushIntensityChange(intensity)}
+									className={clsx(
+										"w-6 h-6 rounded transition-all duration-200",
+										brushIntensity === intensity
+											? "ring-2 ring-blue-500 dark:ring-blue-400 ring-offset-2 dark:ring-offset-gray-800 scale-110"
+											: "hover:scale-105 opacity-70 hover:opacity-100"
+									)}
+									style={{ backgroundColor: colors[intensity] }}
+									title={`${t("brushIntensity.level")} ${intensity}`}
+								/>
+							);
+						})}
+					</div>
+				</div>
+			)}
 
 			{/* 字符工具 */}
 			<button

@@ -23,6 +23,11 @@ type TranslationDict = {
 		pen: string;
 		eraser: string;
 	};
+	brushIntensity: {
+		label: string;
+		level: string;
+		random: string;
+	};
 	buttons: {
 		allGreen: string;
 		reset: string;
@@ -201,6 +206,11 @@ const translations: Record<Language, TranslationDict> = {
 		drawModes: {
 			pen: "Pen",
 			eraser: "Eraser",
+		},
+		brushIntensity: {
+			label: "Intensity",
+			level: "Level",
+			random: "Random",
 		},
 		buttons: {
 			allGreen: "All Green",
@@ -401,6 +411,11 @@ const translations: Record<Language, TranslationDict> = {
 		drawModes: {
 			pen: "画笔",
 			eraser: "橡皮擦",
+		},
+		brushIntensity: {
+			label: "强度",
+			level: "级别",
+			random: "随机",
 		},
 		buttons: {
 			allGreen: "全绿",

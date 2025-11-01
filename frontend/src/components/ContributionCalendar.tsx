@@ -56,6 +56,8 @@ type Props = {
 } & React.HTMLAttributes<HTMLDivElement>;
 
 type DrawMode = 'pen' | 'eraser';
+type BrushIntensity = 1 | 2 | 3 | 4; // 1-4=不同强度
+type PatternIntensity = 1 | 2 | 3 | 4 | 'random'; // 图案强度，包含随机选项
 
 function ContributionCalendar({ contributions: originalContributions, className, ...rest }: Props) {
 
@@ -139,6 +141,8 @@ function ContributionCalendar({ contributions: originalContributions, className,
 
 	// 绘画模式状态
 	const [drawMode, setDrawMode] = React.useState<DrawMode>('pen');
+	const [brushIntensity, setBrushIntensity] = React.useState<BrushIntensity>(4); // 默认最深绿色
+	const [patternIntensity, setPatternIntensity] = React.useState<PatternIntensity>(4); // 图案强度，独立于画笔
 	const [isDrawing, setIsDrawing] = React.useState<boolean>(false);
 	const [lastHoveredDate, setLastHoveredDate] = React.useState<string | null>(null);
 	const [hasDragged, setHasDragged] = React.useState<boolean>(false);
@@ -362,8 +366,9 @@ function ContributionCalendar({ contributions: originalContributions, className,
 	};
 
 	// 开始字符预览
-	const handleStartCharacterPreview = React.useCallback((char: string) => {
+	const handleStartCharacterPreview = React.useCallback((char: string, intensity: PatternIntensity) => {
 		setPreviewCharacter(char);
+		setPatternIntensity(intensity); // 设置图案强度
 		setPreviewDates(new Set()); // 初始为空，等待鼠标悬停
 		setPreviewCenterDate(null);
 		setPreviewMode(true);
@@ -383,16 +388,33 @@ function ContributionCalendar({ contributions: originalContributions, className,
 
 		setUserContributions((prev) => {
 			const newMap = new Map(prev);
-			for (const dateStr of previewDates) {
-				// 设置为最大贡献值 9
-				newMap.set(dateStr, 9);
+			const intensityToCount: Record<number, number> = {
+				1: 1,
+				2: 3,
+				3: 6,
+				4: 9
+			};
+			
+			if (patternIntensity === 'random') {
+				// 随机模式：为每个日期随机分配1-4的强度
+				for (const dateStr of previewDates) {
+					const randomIntensity = Math.floor(Math.random() * 4) + 1; // 1-4
+					const count = intensityToCount[randomIntensity];
+					newMap.set(dateStr, count);
+				}
+			} else {
+				// 固定强度模式
+				const count = intensityToCount[patternIntensity];
+				for (const dateStr of previewDates) {
+					newMap.set(dateStr, count);
+				}
 			}
 			return newMap;
 		});
 
 		// 取消预览
 		handleCancelCharacterPreview();
-	}, [previewMode, previewDates, handleCancelCharacterPreview]);
+	}, [previewMode, previewDates, patternIntensity, handleCancelCharacterPreview]);
 
 
     // 检测窗口是否最大化/全屏，用于切换布局与放大样式
@@ -680,21 +702,17 @@ function ContributionCalendar({ contributions: originalContributions, className,
 		}
 		if (mode === 'pen') {
 			setUserContributions(prev => {
-				// 当前展示值：优先用户覆写，否则原始值
-				const effective = (prev.get(dateStr) ?? originalCountMap.get(dateStr) ?? 0);
-				// 已是最深绿色（>=9）则不再变化
-				if (effective >= 9) return prev;
-
-				// 步进仅基于用户当前覆写（若没有则从0开始）
-				const current = prev.get(dateStr) ?? 0;
-				let nextCount = 0;
-				if (current < 1) nextCount = 1;
-				else if (current < 3) nextCount = 3;
-				else if (current < 6) nextCount = 6;
-				else nextCount = 9;
-
 				const newMap = new Map(prev);
-				newMap.set(dateStr, nextCount);
+				// 根据画笔强度设置贡献数
+				// 强度 1: 1次, 2: 3次, 3: 6次, 4: 9次
+				const intensityToCount: Record<number, number> = {
+					1: 1,
+					2: 3,
+					3: 6,
+					4: 9
+				};
+				const count = intensityToCount[brushIntensity];
+				newMap.set(dateStr, count);
 				return newMap;
 			});
 		} else if (mode === 'eraser') {
@@ -796,7 +814,15 @@ function ContributionCalendar({ contributions: originalContributions, className,
 		// 如果在预览模式且该日期在预览列表中，显示预览样式
 		const isPreviewDate = previewMode && previewDates.has(c.date);
 		if (isPreviewDate) {
-			displayLevel = 4; // 预览时显示最深绿色
+			// 预览时根据图案强度显示对应的level
+			if (patternIntensity === 'random') {
+				// 随机模式：为每个日期生成一个稳定的随机level（基于日期字符串）
+				const hash = c.date.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+				displayLevel = ((hash % 4) + 1) as 1 | 2 | 3 | 4;
+			} else {
+				// 固定强度模式
+				displayLevel = patternIntensity as 1 | 2 | 3 | 4;
+			}
 		}
 
 		// 创建新的tip信息，反映用户设置的贡献次数
@@ -920,6 +946,8 @@ function ContributionCalendar({ contributions: originalContributions, className,
 			<CalendarControls
 				drawMode={drawMode}
 				onDrawModeChange={setDrawMode}
+				brushIntensity={brushIntensity}
+				onBrushIntensityChange={setBrushIntensity}
 				onReset={handleReset}
 				onFillAllGreen={handleFillAllGreen}
 				onExportContributions={handleExportContributions}

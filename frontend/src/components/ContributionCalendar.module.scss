@@ -194,19 +194,9 @@
 		}
 	}
 
-	// 预览状态样式
+	// 预览状态样式 - 只保留脉冲动画，颜色由data-level决定
 	&.preview {
-		background: #216e39 !important;
-		border-color: rgba(33, 110, 57, 0.8) !important;
-		outline: 2px solid #ff6b35 !important;
-		outline-offset: 1px;
 		animation: pulse 1.5s infinite;
-
-		:global(.dark) & {
-			background: #39d353 !important;
-			border-color: rgba(57, 211, 83, 0.8) !important;
-			outline: 2px solid #ff8c42 !important;
-		}
 	}
 
 	@keyframes pulse {
