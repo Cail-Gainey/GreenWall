@@ -1,23 +1,23 @@
+// i18n.tsx 是前端应用的国际化（多语言）核心管理模块。
+// 它负责：
+// 1. 定义应用中所有界面文本的翻译字典 (中/英)；
+// 2. 提供 TranslationContext 及 Provider，用于在整个 React 树中注入翻译能力；
+// 3. 实现动态字符串插值 ({{key}}) 解析逻辑；
+// 4. 持久化用户的语言偏好设置到 localStorage。
 import React from "react";
 
 export type Language = "en" | "zh";
 
+// 定义翻译字典的强类型接口，确保中英文 Key 的严谨对齐
 type TranslationDict = {
 	languageName: string;
 	labels: {
-		githubUsername: string;
-		githubEmail: string;
-		repoName: string;
 		year: string;
-		drawMode: string;
-		actions: string;
-		language: string;
-		dataActions: string;
 	};
-	placeholders: {
-		githubUsername: string;
-		githubEmail: string;
-		repoName: string;
+	buttons: {
+		import: string;
+		export: string;
+		generate: string;
 	};
 	drawModes: {
 		pen: string;
@@ -26,33 +26,17 @@ type TranslationDict = {
 	brushIntensity: {
 		label: string;
 		level: string;
+		auto: string;
 		random: string;
-	};
-	buttons: {
-		allGreen: string;
-		reset: string;
-		generateRepo: string;
-		generating: string;
-		export: string;
-		import: string;
 	};
 	titles: {
 		pen: string;
 		eraser: string;
-		allGreen: string;
+		fillAll: string;
 		reset: string;
-		generate: string;
-		export: string;
 		import: string;
-	};
-	messages: {
-		generateRepoMissing: string;
-		generateRepoError: string;
-		noContributions: string;
-		exportSuccess: string;
-		exportError: string;
-		importSuccess: string;
-		importError: string;
+		export: string;
+		generate: string;
 	};
 	gitInstall: {
 		title: string;
@@ -67,6 +51,12 @@ type TranslationDict = {
 		};
 		checkAgain: string;
 		version: string;
+	};
+	gitStatus: {
+		checking: string;
+		installed: string;
+		notInstalled: string;
+		openSettings: string;
 	};
 	gitPathSettings: {
 		title: string;
@@ -90,6 +80,11 @@ type TranslationDict = {
 		currentPathDefault: string;
 		newPath: string;
 		clearInput: string;
+		cmdWindows: string;
+		cmdMac: string;
+		cmdLinux: string;
+		setSuccessWithVersion: string;
+		resetSuccessWithVersion: string;
 		loading: string;
 	};
 	calendar: {
@@ -132,6 +127,8 @@ type TranslationDict = {
 		nameWarningInvalid: string;
 		emptyNameError: string;
 		invalidNameError: string;
+		branchLabel: string;
+		branchPlaceholder: string;
 		language: string;
 		languageHint: string;
 		multiLanguageMode: string;
@@ -183,25 +180,55 @@ type TranslationDict = {
 			content: string;
 		}>;
 	};
+	settings: {
+		title: string;
+		appearance: string;
+		theme: string;
+		themeSystem: string;
+		themeLight: string;
+		themeDark: string;
+		language: string;
+		languageLabel: string;
+		data: string;
+		clearCache: string;
+		clearCacheDesc: string;
+		clear: string;
+		cacheCleared: string;
+		git: string;
+	};
+	about: {
+		title: string;
+		description: string;
+		version: string;
+		github: string;
+		copyright: string;
+	};
+	notifications: {
+		loginFirst: string;
+		pushSuccess: string;
+		operationFailed: string;
+		selectedChar: string;
+		fillSuccess: string;
+		importSuccess: string;
+		importFailed: string;
+		exportSuccess: string;
+		stampMode: string;
+		stampModeDesc: string;
+		noContributions: string;
+	};
 };
 
 const translations: Record<Language, TranslationDict> = {
 	en: {
+		// ... 英文翻译字典内容
 		languageName: "English",
 		labels: {
-			githubUsername: "GitHub Username",
-			githubEmail: "GitHub Email",
-			repoName: "Repository Name",
 			year: "Year",
-			drawMode: "Draw Mode",
-			actions: "Actions",
-			language: "Language",
-			dataActions: "Data Actions",
 		},
-		placeholders: {
-			githubUsername: "octocat",
-			githubEmail: "monalisa@github.com",
-			repoName: "my-contributions",
+		buttons: {
+			import: "Import",
+			export: "Export",
+			generate: "Generate",
 		},
 		drawModes: {
 			pen: "Pen",
@@ -210,34 +237,17 @@ const translations: Record<Language, TranslationDict> = {
 		brushIntensity: {
 			label: "Intensity",
 			level: "Level",
+			auto: "Auto",
 			random: "Random",
-		},
-		buttons: {
-			allGreen: "All Green",
-			reset: "Reset",
-			generateRepo: "Generate Repo",
-			generating: "Generating...",
-			export: "Export",
-			import: "Import",
 		},
 		titles: {
 			pen: "Pen mode - click or drag to add contributions",
 			eraser: "Eraser mode - click or drag to clear contributions",
-			allGreen: "Set all contributions to green",
+			fillAll: "Set all contributions to green",
 			reset: "Clear all customised contribution data",
 			generate: "Create a local git repository matching this contribution calendar",
 			export: "Export current contributions to a JSON file",
 			import: "Import contributions from a JSON file",
-		},
-		messages: {
-			generateRepoMissing:
-				"Please provide a GitHub username and email before generating a repository.",
-			noContributions: "No contributions to generate. Add contributions first.",
-			generateRepoError: "Failed to generate repository: {{message}}",
-			exportSuccess: "Contributions exported to {{filePath}}",
-			exportError: "Failed to export contributions: {{message}}",
-			importSuccess: "Contributions imported successfully",
-			importError: "Failed to import contributions: {{message}}",
 		},
 		gitInstall: {
 			title: "Git Installation Required",
@@ -252,6 +262,12 @@ const translations: Record<Language, TranslationDict> = {
 			},
 			checkAgain: "Check Again",
 			version: "Git Version: {{version}}",
+		},
+		gitStatus: {
+			checking: "Checking Git...",
+			installed: "Git Installed",
+			notInstalled: "Git Not Installed",
+			openSettings: "Click to configure Git path",
 		},
 		gitPathSettings: {
 			title: "Git Path Settings",
@@ -275,6 +291,11 @@ const translations: Record<Language, TranslationDict> = {
 			currentPathDefault: "Use system default path (git)",
 			newPath: "Set New Git Path",
 			clearInput: "Clear input",
+			cmdWindows: "Run in Command Prompt: where git",
+			cmdMac: "Run in Terminal: which git",
+			cmdLinux: "Run in Terminal: which git",
+			setSuccessWithVersion: "Path set successfully! Git version: {{version}}",
+			resetSuccessWithVersion: "Reset to default! Git version: {{version}}",
 			loading: "Loading...",
 		},
 		calendar: {
@@ -291,7 +312,7 @@ const translations: Record<Language, TranslationDict> = {
 			tabUppercase: "A-Z",
 			tabLowercase: "a-z",
 			tabNumbers: "0-9",
-			tabSymbols: "🎨 Symbols",
+			tabSymbols: "Symbols",
 			previewTooltip: "Preview character: {{char}}",
 			characterTool: "Character Tool",
 			cancelPreview: "Cancel Preview",
@@ -317,6 +338,8 @@ const translations: Record<Language, TranslationDict> = {
 			nameWarningInvalid: "Contains invalid characters, will be converted to: {{name}}",
 			emptyNameError: "Please enter or select a repository name",
 			invalidNameError: "Invalid repository name. Please use letters, numbers, hyphens, underscores, or dots",
+			branchLabel: "Target Branch",
+			branchPlaceholder: "e.g., main or master",
 			language: "Programming Language",
 			languageHint: "Select the programming language for the generated repository",
 			multiLanguageMode: "Enable Multi-Language Mode",
@@ -390,23 +413,52 @@ const translations: Record<Language, TranslationDict> = {
 				}
 			]
 		},
+		settings: {
+			title: "Settings",
+			appearance: "Appearance",
+			theme: "Theme",
+			themeSystem: "System",
+			themeLight: "Light",
+			themeDark: "Dark",
+			language: "Language",
+			languageLabel: "Language",
+			data: "Data",
+			clearCache: "Clear Local Cache",
+			clearCacheDesc: "Remove all locally saved contribution data",
+			clear: "Clear",
+			cacheCleared: "Cache cleared successfully",
+			git: "Git Settings"
+		},
+		about: {
+			title: "About",
+			description: "GreenWall is a powerful tool designed to customize your GitHub contribution calendar. Whether you want to draw pixel art, write text, or create unique patterns, GreenWall makes it easy and fun.",
+			version: "Version {{version}}",
+			github: "GitHub",
+			copyright: "© {{year}} Cail Gainey. MIT License."
+		},
+		notifications: {
+			loginFirst: "Please login first",
+			pushSuccess: "Successfully pushed to GitHub!",
+			operationFailed: "Operation failed",
+			selectedChar: "Selected {{char}} with intensity {{intensity}}",
+			fillSuccess: "Filled all contributions",
+			importSuccess: "Contributions imported successfully",
+			importFailed: "Failed to import contributions",
+			exportSuccess: "Contributions exported successfully",
+			stampMode: "Stamp Mode Enabled",
+			stampModeDesc: "Click on the calendar to place the selected pattern.",
+			noContributions: "No contribution data found for the current year. Please draw something first!"
+		}
 	},
 	zh: {
 		languageName: "中文",
 		labels: {
-			githubUsername: "GitHub 用户名",
-			githubEmail: "GitHub 邮箱",
-			repoName: "仓库名称",
 			year: "年份",
-			drawMode: "绘制模式",
-			actions: "操作",
-			language: "语言",
-			dataActions: "数据操作",
 		},
-		placeholders: {
-			githubUsername: "octocat",
-			githubEmail: "monalisa@github.com",
-			repoName: "my-contributions",
+		buttons: {
+			import: "导入",
+			export: "导出",
+			generate: "生成",
 		},
 		drawModes: {
 			pen: "画笔",
@@ -415,33 +467,17 @@ const translations: Record<Language, TranslationDict> = {
 		brushIntensity: {
 			label: "强度",
 			level: "级别",
+			auto: "自动",
 			random: "随机",
-		},
-		buttons: {
-			allGreen: "全绿",
-			reset: "重置",
-			generateRepo: "生成仓库",
-			generating: "生成中...",
-			export: "导出",
-			import: "导入",
 		},
 		titles: {
 			pen: "画笔模式 - 点击或拖拽添加贡献",
 			eraser: "橡皮擦模式 - 点击或拖拽清除贡献",
-			allGreen: "将所有贡献设置为绿色",
-			reset: "清除所有自定义贡献数据",
-			generate: "创建与当前贡献图匹配的本地 Git 仓库",
-			export: "导出当前贡献数据到 JSON 文件",
-			import: "从 JSON 文件导入贡献数据",
-		},
-		messages: {
-			generateRepoMissing: "请先填写 GitHub 用户名和邮箱，然后再生成仓库。",
-			noContributions: "没有可生成的贡献，请先添加贡献。",
-			generateRepoError: "生成仓库失败：{{message}}",
-			exportSuccess: "贡献数据已导出到 {{filePath}}",
-			exportError: "导出贡献数据失败：{{message}}",
-			importSuccess: "贡献数据已成功导入",
-			importError: "导入贡献数据失败：{{message}}",
+			fillAll: "全绿 - 将所有日期填充为绿色",
+			reset: "重置 - 清除这一年的绘画",
+			generate: "生成 - 创建本地Git仓库",
+			export: "导出 - 保存为JSON",
+			import: "导入 - 加载JSON文件",
 		},
 		gitInstall: {
 			title: "需要安装 Git",
@@ -456,6 +492,12 @@ const translations: Record<Language, TranslationDict> = {
 			},
 			checkAgain: "再次检测",
 			version: "Git 版本：{{version}}",
+		},
+		gitStatus: {
+			checking: "正在检测 Git...",
+			installed: "Git 已安装",
+			notInstalled: "未检测到 Git",
+			openSettings: "点击配置 Git 路径",
 		},
 		gitPathSettings: {
 			title: "Git 路径设置",
@@ -479,6 +521,11 @@ const translations: Record<Language, TranslationDict> = {
 			currentPathDefault: "使用系统默认路径 (git)",
 			newPath: "设置新的Git路径",
 			clearInput: "清空输入",
+			cmdWindows: "在命令提示符中运行: where git",
+			cmdMac: "在终端中运行: which git",
+			cmdLinux: "在终端中运行: which git",
+			setSuccessWithVersion: "设置成功！Git版本: {{version}}",
+			resetSuccessWithVersion: "已重置为系统默认路径！Git版本: {{version}}",
 			loading: "加载中...",
 		},
 		calendar: {
@@ -495,7 +542,7 @@ const translations: Record<Language, TranslationDict> = {
 			tabUppercase: "A-Z",
 			tabLowercase: "a-z",
 			tabNumbers: "0-9",
-			tabSymbols: "🎨 符号",
+			tabSymbols: "符号",
 			previewTooltip: "预览字符: {{char}}",
 			characterTool: "字符工具",
 			cancelPreview: "取消预览",
@@ -521,6 +568,8 @@ const translations: Record<Language, TranslationDict> = {
 			nameWarningInvalid: "包含不允许的字符，将自动转换为: {{name}}",
 			emptyNameError: "请输入或选择仓库名称",
 			invalidNameError: "仓库名无效，请使用字母、数字、连字符、下划线或点",
+			branchLabel: "推送分支",
+			branchPlaceholder: "例如: main 或 master",
 			language: "编程语言",
 			languageHint: "选择生成仓库使用的编程语言",
 			multiLanguageMode: "启用多语言模式",
@@ -549,18 +598,18 @@ const translations: Record<Language, TranslationDict> = {
 			logoutFailed: "退出登录失败: {{message}}",
 		},
 		months: [
-			"1",
-			"2",
-			"3",
-			"4",
-			"5",
-			"6",
-			"7",
-			"8",
-			"9",
-			"10",
-			"11",
-			"12",
+			"1月",
+			"2月",
+			"3月",
+			"4月",
+			"5月",
+			"6月",
+			"7月",
+			"8月",
+			"9月",
+			"10月",
+			"11月",
+			"12月",
 		],
 		weekdays: {
 			mon: "一",
@@ -607,6 +656,42 @@ const translations: Record<Language, TranslationDict> = {
 				}
 			]
 		},
+		settings: {
+			title: "设置",
+			appearance: "外观",
+			theme: "主题",
+			themeSystem: "跟随系统",
+			themeLight: "明亮",
+			themeDark: "暗黑",
+			language: "语言",
+			languageLabel: "应用语言",
+			data: "数据",
+			clearCache: "清除本地缓存",
+			clearCacheDesc: "移除所有本地保存的贡献数据",
+			clear: "清除",
+			cacheCleared: "缓存已清除",
+			git: "Git 设置"
+		},
+		about: {
+			title: "关于",
+			description: "GreenWall 是一个强大的 GitHub 贡献日历自定义工具。无论您是想画像素画、写文字，还是创造独特的图案，GreenWall 都能让这一切变得简单有趣。",
+			version: "版本 {{version}}",
+			github: "GitHub",
+			copyright: "© {{year}} Cail Gainey. MIT 协议。"
+		},
+		notifications: {
+			loginFirst: "请先登录",
+			pushSuccess: "成功推送到 GitHub！",
+			operationFailed: "操作失败",
+			selectedChar: "已选择 {{char}}",
+			fillSuccess: "已填充所有贡献",
+			importSuccess: "贡献数据导入成功",
+			importFailed: "导入贡献数据失败",
+			exportSuccess: "贡献数据导出成功",
+			stampMode: "印章模式已开启",
+			stampModeDesc: "在日历上点击以放置所选图案。",
+			noContributions: "当前年份没有任何贡献数据，请先在日历上绘画！"
+		}
 	},
 };
 
@@ -621,10 +706,12 @@ const LANGUAGE_STORAGE_KEY = "github-contributor.language";
 
 const TranslationContext = React.createContext<TranslationContextValue | undefined>(undefined);
 
+/**
+ * interpolate：实现字符串插值。
+ * 将模板中的 {{key}} 替换为 params 中对应的值。
+ */
 function interpolate(template: string, params?: Record<string, string | number>) {
-	if (!params) {
-		return template;
-	}
+	if (!params) return template;
 	return template.replace(/\{\{(.*?)\}\}/g, (_, rawKey: string) => {
 		const key = rawKey.trim();
 		const value = params[key];
@@ -632,6 +719,10 @@ function interpolate(template: string, params?: Record<string, string | number>)
 	});
 }
 
+/**
+ * resolveKey：递归解析点分隔符组成的键路径（如 "pushDialog.title"）。
+ * 从翻译对象中提取深层嵌套的字符串。
+ */
 function resolveKey(dictionary: TranslationDict, key: string): string | undefined {
 	const parts = key.split(".");
 	let current: any = dictionary;
@@ -643,21 +734,25 @@ function resolveKey(dictionary: TranslationDict, key: string): string | undefine
 			return undefined;
 		}
 	}
-
 	return typeof current === "string" ? current : undefined;
 }
 
+/**
+ * TranslationProvider：国际化上下文提供者，初始化语言偏好并提供翻译工具函数。
+ */
 export const TranslationProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+	// 初始化时优先尝试从 localStorage 加载用户之前的语言选择
 	const [language, setLanguageState] = React.useState<Language>(() => {
-		if (typeof window === "undefined") {
-			return "en";
-		}
+		if (typeof window === "undefined") return "en";
 		const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
 		return stored === "en" || stored === "zh" ? stored : "en";
 	});
 
 	const dictionary = translations[language];
 
+	/**
+	 * setLanguage：切换语言并持久化。
+	 */
 	const setLanguage = React.useCallback((next: Language) => {
 		setLanguageState(next);
 		if (typeof window !== "undefined") {
@@ -665,6 +760,9 @@ export const TranslationProvider: React.FC<React.PropsWithChildren> = ({ childre
 		}
 	}, []);
 
+	/**
+	 * translate：核心翻译函数，支持嵌套 Key 和动态参数。
+	 */
 	const translate = React.useCallback(
 		(key: string, params?: Record<string, string | number>) => {
 			const template = resolveKey(dictionary, key) ?? key;
@@ -686,6 +784,9 @@ export const TranslationProvider: React.FC<React.PropsWithChildren> = ({ childre
 	return <TranslationContext.Provider value={contextValue}>{children}</TranslationContext.Provider>;
 };
 
+/**
+ * useTranslations：消费国际化上下文的自定义 Hook。
+ */
 export function useTranslations() {
 	const context = React.useContext(TranslationContext);
 	if (!context) {
@@ -694,6 +795,7 @@ export function useTranslations() {
 	return context;
 }
 
+// 可选语言配置列表，供切换组件使用
 export const AVAILABLE_LANGUAGES: { value: Language; label: string }[] = [
 	{ value: "en", label: translations.en.languageName },
 	{ value: "zh", label: translations.zh.languageName },

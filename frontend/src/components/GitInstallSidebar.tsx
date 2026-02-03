@@ -1,25 +1,40 @@
+// GitInstallSidebar.tsx 是一个全局告警组件。
+// 它在 App 检测到本地未安装 Git 时显示，负责引导用户完成 Git 的安装配置。
 import React, { useState } from "react";
-import { XIcon, ExclamationIcon, ChevronUpIcon } from '@heroicons/react/solid';
+import { Card, Button, Typography, Space } from 'antd';
+import { WarningOutlined, DownloadOutlined, CloseOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslations } from "../i18n";
 
+const { Text, Paragraph } = Typography;
+
 interface GitInstallSidebarProps {
-	onCheckAgain: () => void;
+	onCheckAgain: () => void; // 重新检测 Git 状态的回调
 }
 
+/**
+ * GitInstallSidebar 组件：提供多平台的 Git 安装指南。
+ */
 const GitInstallSidebar: React.FC<GitInstallSidebarProps> = ({ onCheckAgain }) => {
 	const { t } = useTranslations();
-	const [isExpanded, setIsExpanded] = useState(false);
+	const [isExpanded, setIsExpanded] = useState(false); // 控制侧边栏展开/收起状态
 
+	// 基于浏览器平台信息判断操作系统
 	const isMac = navigator.platform.toLowerCase().includes("mac");
-	const isLinux = navigator.platform.toLowerCase().includes("linux") || 
+	const isLinux = navigator.platform.toLowerCase().includes("linux") ||
 		navigator.platform.toLowerCase().includes("x11");
 
+	/**
+	 * getInstructions：返回符合当前操作系统的安装文本建议。
+	 */
 	const getInstructions = () => {
 		if (isMac) return t("gitInstall.instructions.mac");
 		if (isLinux) return t("gitInstall.instructions.linux");
 		return t("gitInstall.instructions.windows");
 	};
 
+	/**
+	 * getDownloadUrl：返回符合当前操作系统的官方下载页面链接。
+	 */
 	const getDownloadUrl = () => {
 		if (isMac) return "https://git-scm.com/download/mac";
 		if (isLinux) return "https://git-scm.com/download/linux";
@@ -27,58 +42,69 @@ const GitInstallSidebar: React.FC<GitInstallSidebarProps> = ({ onCheckAgain }) =
 	};
 
 	return (
-		<div className="fixed bottom-20 left-4 z-40 flex flex-col items-end gap-2">
-			{/* 展开的侧边栏 */}
+		<div className="fixed bottom-20 left-4 z-40 flex flex-col items-start gap-2">
+			{/* 1. 展开详情态：显示详细步骤和按钮 */}
 			{isExpanded && (
-				<div className="w-80 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-6 shadow-lg">
-					<div className="flex items-center justify-between mb-4">
-						<h3 className="text-lg font-bold text-gray-900 dark:text-white">
-							{t("gitInstall.title")}
-						</h3>
-						<button
+				<Card
+					style={{ width: 320, boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+					title={t("gitInstall.title")}
+					extra={
+						<Button
+							type="text"
+							icon={<CloseOutlined />}
 							onClick={() => setIsExpanded(false)}
-							className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-							aria-label={t("gitInstall.close")}
-						>
-							<XIcon className="h-5 w-5" />
-						</button>
-					</div>
+							size="small"
+						/>
+					}
+					size="small"
+				>
+					<Space direction="vertical" style={{ width: '100%' }}>
+						<Paragraph type="secondary" style={{ marginBottom: 8 }}>
+							{t("gitInstall.notInstalled")}
+						</Paragraph>
 
-					<div className="space-y-4">
-						<p className="text-sm text-gray-700 dark:text-gray-300">{t("gitInstall.notInstalled")}</p>
-						<div className="rounded-lg bg-blue-50 dark:bg-blue-900/30 p-4 text-sm text-gray-800 dark:text-gray-200">
-							{getInstructions()}
+						{/* 智能提示区域 */}
+						<div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded text-sm mb-2 border border-blue-100 dark:border-blue-800">
+							<Text className="text-slate-700 dark:text-blue-100">{getInstructions()}</Text>
 						</div>
 
-						<a
+						{/* 下载按钮 */}
+						<Button
+							type="primary"
+							block
 							href={getDownloadUrl()}
 							target="_blank"
-							rel="noopener noreferrer"
-							className="block w-full rounded-lg bg-gray-900 dark:bg-gray-700 px-6 py-3 text-center font-semibold text-white transition-colors hover:bg-gray-800 dark:hover:bg-gray-600"
+							icon={<DownloadOutlined />}
 						>
 							{t("gitInstall.downloadLink")}
-						</a>
+						</Button>
 
-						<button
+						{/* 重新检测按钮：安装完成后用户可手动触发 */}
+						<Button
+							block
 							onClick={onCheckAgain}
-							className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 font-medium text-gray-700 dark:text-gray-200 transition-colors hover:bg-gray-50 dark:hover:bg-gray-600"
+							icon={<ReloadOutlined />}
 						>
 							{t("gitInstall.checkAgain")}
-						</button>
-					</div>
-				</div>
+						</Button>
+					</Space>
+				</Card>
 			)}
 
-			{/* 提示按钮 */}
-			<button
-				onClick={() => setIsExpanded(!isExpanded)}
-				className="flex items-center gap-2 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-black shadow-md transition-all hover:bg-yellow-600"
-				aria-label={t("gitInstall.notInstalledLabel")}
-			>
-				<ExclamationIcon className="h-5 w-5" />
-				<span>{t("gitInstall.notInstalledLabel")}</span>
-				<ChevronUpIcon className={`h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-			</button>
+			{/* 2. 收起告警态：显眼的危险提示按钮，引导用户点击展开 */}
+			{!isExpanded && (
+				<Button
+					type="primary"
+					danger
+					shape="round"
+					icon={<WarningOutlined />}
+					onClick={() => setIsExpanded(true)}
+					size="large"
+					style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+				>
+					{t("gitInstall.notInstalledLabel")}
+				</Button>
+			)}
 		</div>
 	);
 };

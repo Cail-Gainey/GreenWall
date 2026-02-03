@@ -1,6 +1,9 @@
 import React from "react";
-import { UserCircleIcon, LogoutIcon } from '@heroicons/react/solid';
+import { Button, Avatar, Card, Space, Typography, Spin } from 'antd';
+import { UserOutlined, LogoutOutlined, GithubOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslations } from "../i18n";
+
+const { Text } = Typography;
 
 /**
  * LoginButton 组件
@@ -26,94 +29,59 @@ export const LoginButton: React.FC<Props> = ({
 	if (userInfo) {
 		// 已登录状态
 		return (
-			<div className="flex w-full flex-col gap-2">
-				<div className="flex items-center gap-3 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
-					{userInfo.avatarUrl ? (
-						<img
+			<Card size="small" style={{ width: '100%', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+				<div className="flex items-center justify-between">
+					<Space>
+						<Avatar
 							src={userInfo.avatarUrl}
-							alt={userInfo.username}
-							className="h-10 w-10 rounded-full border-2 border-green-600 dark:border-green-500"
+							icon={<UserOutlined />}
+							style={{ backgroundColor: '#87d068' }}
 						/>
-					) : (
-						<UserCircleIcon className="h-10 w-10 text-green-600 dark:text-green-500" />
-					)}
-					<div className="flex flex-col flex-1">
-						<span className="text-sm font-medium text-gray-900 dark:text-white">
-							{userInfo.username}
-						</span>
-						<span className="text-xs text-gray-600 dark:text-gray-400">{userInfo.email}</span>
-					</div>
-					<button
-						type="button"
+						<div className="flex flex-col">
+							<Text strong>{userInfo.username}</Text>
+							<Text type="secondary" style={{ fontSize: '12px' }}>{userInfo.email}</Text>
+						</div>
+					</Space>
+					<Button
+						type="text"
+						danger
+						icon={<LogoutOutlined />}
 						onClick={onLogout}
-						className="rounded border border-red-500 dark:border-red-600 bg-white dark:bg-gray-700 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-1"
 						title={t("loginButton.logoutTitle")}
-					>
-						<LogoutIcon className="h-3 w-3" />
-						{t("loginButton.logout")}
-					</button>
+					/>
 				</div>
-			</div>
+			</Card>
 		);
 	}
 
 	// 未登录状态
 	return (
-		<div className="flex w-full flex-col gap-2">
-			<button
-				type="button"
+		<div className="flex flex-col gap-2 w-full">
+			<Button
+				block
+				type={isLoggingIn ? "default" : "primary"}
+				icon={isLoggingIn ? <LoadingOutlined /> : <GithubOutlined />}
 				onClick={onLogin}
-				className={`flex w-full items-center justify-center gap-2 rounded border px-6 py-3 text-base font-medium transition-colors ${
-					isLoggingIn
-						? "border-orange-500 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-900/50"
-						: "border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-				}`}
-				title={isLoggingIn ? t("loginButton.cancelLoginTitle") : t("loginButton.loginTitle")}
+				size="large"
+				loading={isLoggingIn}
+				style={{ backgroundColor: isLoggingIn ? undefined : '#24292e' }}
 			>
-				{isLoggingIn ? (
-					<>
-						<svg className="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-							<circle
-								className="opacity-25"
-								cx="12"
-								cy="12"
-								r="10"
-								stroke="currentColor"
-								strokeWidth="4"
-							/>
-							<path
-								className="opacity-75"
-								fill="currentColor"
-								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-							/>
-						</svg>
-						{t("loginButton.loggingIn")}
-					</>
-				) : (
-					<>
-						<svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-							<path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.257.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.42-1.305.763-1.605-2.665-.303-5.466-1.335-5.466-5.935 0-1.312.47-2.382 1.236-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23A11.5 11.5 0 0 1 12 5.8a11.5 11.5 0 0 1 3.003.404c2.292-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.838 1.236 1.908 1.236 3.22 0 4.61-2.804 5.628-5.475 5.923.431.372.816 1.103.816 2.222 0 1.605-.014 2.897-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.297 24 12 24 5.37 18.63 0 12 0Z" />
-						</svg>
-						{t("loginButton.loginWithGitHub")}
-					</>
-				)}
-			</button>
+				{isLoggingIn ? t("loginButton.loggingIn") : t("loginButton.loginWithGitHub")}
+			</Button>
+
 			{isLoggingIn && (
-				<div className="space-y-2">
+				<div className="text-center">
 					{loginProgress && (
-						<div className="p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
-							<p className="text-xs text-blue-800 dark:text-blue-200 flex items-center gap-2">
-								<svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-									<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-									<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-								</svg>
+						<div className="mb-2">
+							<Spin indicator={<LoadingOutlined style={{ fontSize: 14 }} spin />} />
+							<Text type="secondary" style={{ marginLeft: 8, fontSize: '12px' }}>
 								{loginProgress}
-							</p>
+							</Text>
 						</div>
 					)}
-					<p className="text-xs text-gray-600 dark:text-gray-400">
+					<Text type="secondary" style={{ fontSize: '12px' }}>
 						{t("loginButton.loginHint")}
-					</p>
+					</Text>
 				</div>
 			)}
 		</div>

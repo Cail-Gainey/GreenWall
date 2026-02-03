@@ -1,16 +1,29 @@
-import React from "react";
+// App.tsx 是前端 React 应用的根组件。
+// 它负责：
+// 1. 初始化跨越多年的贡献数据池；
+// 2. 注入全局上下文（ThemeProvider, TranslationProvider, ConfigProvider）；
+// 3. 实时监听系统/应用主题变化并同步给 Ant Design 组件库；
+// 4. 执行全局环境检查 (如 Git 安装检测)。
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import { ThemeProvider } from 'next-themes';
-import { CogIcon, QuestionMarkCircleIcon } from '@heroicons/react/solid';
-import ContributionCalendar, { OneDay } from "./components/ContributionCalendar";
-import GitInstallSidebar from "./components/GitInstallSidebar";
-import GitPathSettings from "./components/GitPathSettings";
-import ThemeToggle from "./components/ThemeToggle";
-import Tutorial from "./components/Tutorial";
+import { ConfigProvider, theme as antTheme } from 'antd';
 import { TranslationProvider, useTranslations, Language } from "./i18n";
-import { BrowserOpenURL } from "../wailsjs/runtime/runtime";
+import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
+import { EditorPage } from "./pages/EditorPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { AboutPage } from "./pages/AboutPage";
+import { OneDay } from "./types";
+import GitInstallSidebar from "./components/GitInstallSidebar";
+
+import Tutorial from "./components/Tutorial";
+import { CheckGitInstalled } from "../wailsjs/go/main/App";
 
 function App() {
+	/**
+	 * generateEmptyYearData：辅助函数，生成指定年份每一天的初始空白贡献数据。
+	 */
 	const generateEmptyYearData = (year: number): OneDay[] => {
 		const data: OneDay[] = [];
 		const start = new Date(year, 0, 1);
@@ -26,6 +39,9 @@ function App() {
 		return data;
 	};
 
+	/**
+	 * generateMultiYearData：生成从 GitHub 诞生年 (2008) 到当前年份的全量空白数据。
+	 */
 	const generateMultiYearData = (): OneDay[] => {
 		const data: OneDay[] = [];
 		const currentYear = new Date().getFullYear();
@@ -39,9 +55,11 @@ function App() {
 	const multiYearData: OneDay[] = generateMultiYearData();
 
 	return (
-		<ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+		// ThemeProvider 处理 next-themes 亮暗色切换
+		<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+			{/* TranslationProvider 处理 i18n 国际化上下文 */}
 			<TranslationProvider>
-				<AppLayout contributions={multiYearData}/>
+				<AppLayout contributions={multiYearData} />
 			</TranslationProvider>
 		</ThemeProvider>
 	);
@@ -51,146 +69,113 @@ type AppLayoutProps = {
 	contributions: OneDay[];
 };
 
+/**
+ * AppLayout 组件：封装了实际的 UI 布局结构，并消费 TranslationContext。
+ */
 const AppLayout: React.FC<AppLayoutProps> = ({ contributions }) => {
-	const { language, setLanguage, t } = useTranslations();
-	const [isGitInstalled, setIsGitInstalled] = React.useState<boolean | null>(null);
-	const [gitVersion, setGitVersion] = React.useState<string>("");
-	const [isGitPathSettingsOpen, setIsGitPathSettingsOpen] = React.useState<boolean>(false);
-	const [isTutorialOpen, setIsTutorialOpen] = React.useState<boolean>(false);
+	const { language } = useTranslations();
+	// curTheme 用于向 AntD 的 ConfigProvider 传递算法（darkAlgorithm 或 defaultAlgorithm）
+	const [curTheme, setCurTheme] = useState<'dark' | 'light'>('light');
 
+	// 使用 MutationObserver 监听 <html> 标签上由 next-themes 注入的 'dark' 类名变化
+	useEffect(() => {
+		const observer = new MutationObserver(() => {
+			if (document.documentElement.classList.contains('dark')) {
+				setCurTheme('dark');
+			} else {
+				setCurTheme('light');
+			}
+		});
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+		return () => observer.disconnect();
+	}, []);
+
+	// 全局环境状态
+	const [isGitInstalled, setIsGitInstalled] = useState<boolean | null>(null);
+	const [showInstallGuide, setShowInstallGuide] = useState(false);
+	const [showTutorial, setShowTutorial] = useState(false);
+
+	// 模拟路由：通过 Overlay 状态显示不同的层级页面
+	const [showSettingsPage, setShowSettingsPage] = useState(false);
+	const [showAboutPage, setShowAboutPage] = useState(false);
+
+	/**
+	 * checkGit：调用 Wails 后端接口检查本机是否已配置 Git 环境。
+	 */
 	const checkGit = React.useCallback(async () => {
 		try {
-			const { CheckGitInstalled } = await import("../wailsjs/go/main/App");
-			const response = await CheckGitInstalled();
-			setIsGitInstalled(response.installed);
-			setGitVersion(response.version);
-		} catch (error) {
-			console.error("Failed to check Git installation:", error);
-			setIsGitInstalled(false);
+			const res = await CheckGitInstalled();
+			// 兼容后端返回字段的大小写差异
+			const isInstalled = !!(res.installed || (res as any).Installed);
+			setIsGitInstalled(isInstalled);
+			if (!isInstalled) setShowInstallGuide(true);
+		} catch (e) {
+			console.error("[App] CheckGitInstalled error:", e);
 		}
 	}, []);
 
-	React.useEffect(() => {
-		checkGit();
-	}, [checkGit]);
-
-	const handleCheckAgain = React.useCallback(() => {
-		checkGit();
-	}, [checkGit]);
-
-	const languageOptions = React.useMemo(
-		() => [
-			{ value: "en" as Language, label: t("languageSwitcher.english") },
-			{ value: "zh" as Language, label: t("languageSwitcher.chinese") },
-		],
-		[t],
-	);
-
-	const handleGitHubClick = (e: React.MouseEvent) => {
-		e.preventDefault();
-		BrowserOpenURL("https://github.com/zmrlft/GreenWall");
-	};
+	useEffect(() => { checkGit(); }, [checkGit]);
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-			{/* 顶部导航栏 */}
-			<header className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-				<div className="container mx-auto px-4 py-3">
-					<div className="flex items-center justify-between">
-						{/* 左侧：GitHub、教程和设置 */}
-						<div className="flex items-center gap-3">
-								<a
-									href="https://github.com/zmrlft/GreenWall"
-									onClick={handleGitHubClick}
-									aria-label="Open GreenWall repository on GitHub"
-									className="text-gray-700 dark:text-white transition-colors hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer"
-								>
-									<svg className="h-8 w-8" viewBox="0 0 24 24" aria-hidden="true">
-										<path
-											fill="currentColor"
-											d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.387.6.113.82-.257.82-.577 0-.285-.01-1.04-.015-2.04-3.338.726-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.757-1.333-1.757-1.09-.745.083-.73.083-.73 1.205.085 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.42-1.305.763-1.605-2.665-.303-5.466-1.335-5.466-5.935 0-1.312.47-2.382 1.236-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23A11.5 11.5 0 0 1 12 5.8a11.5 11.5 0 0 1 3.003.404c2.292-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.838 1.236 1.908 1.236 3.22 0 4.61-2.804 5.628-5.475 5.923.431.372.816 1.103.816 2.222 0 1.605-.014 2.897-.014 3.293 0 .322.218.694.825.576C20.565 21.796 24 17.297 24 12 24 5.37 18.63 0 12 0Z"
-										/>
-									</svg>
-								</a>
-								<button
-									onClick={() => setIsTutorialOpen(true)}
-									className="inline-flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
-									aria-label={t('tutorial.title')}
-									title={t('tutorial.title')}
-								>
-									<QuestionMarkCircleIcon className="h-5 w-5" />
-								</button>
-								<button
-									onClick={() => setIsGitPathSettingsOpen(true)}
-									className="inline-flex items-center justify-center rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-white transition-colors hover:bg-gray-100 dark:hover:bg-gray-600"
-									aria-label="Git设置"
-								>
-									<CogIcon className="h-5 w-5" />
-								</button>
-							</div>
+		<ConfigProvider
+			theme={{
+				// 自动根据全局主题选择 AntD 的算法
+				algorithm: curTheme === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
+				token: {
+					colorPrimary: '#1677ff',
+					borderRadius: 6,
+				},
+				components: {
+					Layout: {
+						headerBg: curTheme === 'dark' ? '#141414' : '#fff',
+						bodyBg: curTheme === 'dark' ? '#000' : '#f5f5f5',
+					}
+				}
+			}}
+			// 同步界面翻译语言
+			locale={language === 'zh' ? zhCN : enUS}
+		>
+			<div className="h-screen w-screen overflow-hidden relative">
+				{/* 默认渲染核心编辑器页面 */}
+				<EditorPage
+					contributions={contributions}
+					onOpenSettings={() => setShowSettingsPage(true)}
+					onOpenAbout={() => setShowAboutPage(true)}
+					onOpenTutorial={() => setShowTutorial(true)}
+					isGitInstalled={isGitInstalled}
+				/>
 
-							{/* 右侧：语言和主题 */}
-							<div className="flex items-center gap-3">
-								<div
-									className="inline-flex overflow-hidden rounded border border-gray-300 dark:border-gray-600"
-									role="group"
-									aria-label={t("labels.language")}
-								>
-									{languageOptions.map((option, index) => {
-										const isActive = language === option.value;
-										const borderClass = index === 0 ? "border-r border-gray-300 dark:border-gray-600" : "";
-										return (
-											<button
-												key={option.value}
-												type="button"
-												aria-pressed={isActive}
-												onClick={() => setLanguage(option.value)}
-												className={`px-4 py-2 text-sm font-medium transition-colors ${borderClass} ${
-													isActive
-														? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-														: "bg-white dark:bg-gray-700 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600"
-												}`}
-											>
-												{option.label}
-											</button>
-										);
-									})}
-								</div>
-								<ThemeToggle />
-							</div>
-						</div>
+				{/* 设置页面弹出层 */}
+				{showSettingsPage && (
+					<div className="absolute inset-0 z-50 bg-gray-50 dark:bg-black overflow-y-auto">
+						<SettingsPage onBack={() => setShowSettingsPage(false)} />
 					</div>
-			</header>
+				)}
 
-			{/* 主内容区 */}
-			<div className="container mx-auto px-2 py-6">
-				<main className="flex justify-center">
-					<div className="w-full max-w-6xl">
-						<ContributionCalendar contributions={contributions}/>
+				{/* 关于页面弹出层 */}
+				{showAboutPage && (
+					<div className="absolute inset-0 z-50 bg-gray-50 dark:bg-black overflow-y-auto">
+						<AboutPage onBack={() => setShowAboutPage(false)} />
 					</div>
-				</main>
+				)}
 			</div>
 
-			{/* Git 安装提示 - 仅在未安装时显示 */}
-			{isGitInstalled === false && (
-				<GitInstallSidebar onCheckAgain={handleCheckAgain} />
+			{/* Git 未安装时的引导说明栏 */}
+			{showInstallGuide && (
+				<GitInstallSidebar onCheckAgain={() => {
+					checkGit();
+					setShowInstallGuide(false);
+				}} />
 			)}
 
-			{/* Git 路径设置弹窗 */}
-			{isGitPathSettingsOpen && (
-				<GitPathSettings
-					onClose={() => setIsGitPathSettingsOpen(false)}
-					onCheckAgain={handleCheckAgain}
-				/>
+			{/* 初次进入或手动点击的新手教程 */}
+			{showTutorial && (
+				<Tutorial onClose={() => setShowTutorial(false)} />
 			)}
-
-			{/* 使用教程弹窗 */}
-			{isTutorialOpen && (
-				<Tutorial onClose={() => setIsTutorialOpen(false)} />
-			)}
-		</div>
+		</ConfigProvider>
 	);
 };
 
 export default App;
+
 
