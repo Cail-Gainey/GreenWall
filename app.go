@@ -1,3 +1,4 @@
+// app.go 包含前端 Wails 调用的后端核心逻辑绑定。
 package main
 
 import (
@@ -16,76 +17,83 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 	"go.uber.org/zap"
+	"green-wall/templates/languages"
 )
 
-// App struct
+// App 结构体定义了应用程序的后端状态和 Wails 绑定方法。
 type App struct {
 	ctx          context.Context
 	repoBasePath string
-	gitPath      string       // 自定义git路径，空则使用系统默认路径
-	userInfo     *UserInfo    // 用户登录信息
-	oauthServer  *http.Server // OAuth回调服务器
+	gitPath      string       // 自定义 git 路径，为空则使用系统默认路径
+	userInfo     *UserInfo    // 当前登录的 GitHub 用户信息
+	oauthServer  *http.Server // 用于接收 OAuth 回调的临时 HTTP 服务器
 }
 
-// NewApp creates a new App application struct
+// NewApp 创建并返回一个新的 App 实例。
 func NewApp() *App {
 	return &App{
 		repoBasePath: filepath.Join(os.TempDir(), "green-wall"),
 	}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
+// startup 是在应用启动时由 Wails 自动调用的钩子函数。
+// 它负责保存应用上下文，以便后续调用前端运行时方法。
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// Greet returns a greeting for the given name
+// Greet 是一个演示用的问候方法。
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
 
-// GetSupportedLanguagesAPI 获取支持的编程语言列表
+// GetSupportedLanguagesAPI 返回当前支持的所有编程语言列表，用于前端下拉选择。
 func (a *App) GetSupportedLanguagesAPI() []map[string]string {
-	return GetSupportedLanguages()
+	return languages.GetSupportedLanguages()
 }
 
+// ContributionDay 代表单日的贡献量。
 type ContributionDay struct {
-	Date  string `json:"date"`
-	Count int    `json:"count"`
+	Date  string `json:"date"`  // 格式: YYYY-MM-DD
+	Count int    `json:"count"` // 提交次数
 }
 
+// GenerateRepoRequest 包含生成 Git 仓库所需的所有元数据。
 type GenerateRepoRequest struct {
-	Year            int               `json:"year"`
-	GithubUsername  string            `json:"githubUsername"`
-	GithubEmail     string            `json:"githubEmail"`
-	RepoName        string            `json:"repoName"`
-	Contributions   []ContributionDay `json:"contributions"`
-	Language        string            `json:"language"`         // 单语言模式(向后兼容)
-	LanguageConfigs []LanguageConfig  `json:"languageConfigs"`  // 多语言配置
-	MultiLanguage   bool              `json:"multiLanguage"`    // 是否启用多语言模式
+	Year            int               `json:"year"`           // 目标年份
+	GithubUsername  string            `json:"githubUsername"` // 提交者的 GitHub 用户名
+	GithubEmail     string            `json:"githubEmail"`    // 提交者的 GitHub 邮箱
+	RepoName        string            `json:"repoName"`       // 目标仓库名
+	Contributions   []ContributionDay `json:"contributions"`  // 包含每一天提交数的数组
+	Language        string            `json:"language"`        // 默认编程语言(单语言模式)
+	LanguageConfigs []LanguageConfig  `json:"languageConfigs"` // 多语言配置(多语言模式)
+	MultiLanguage   bool              `json:"multiLanguage"`   // 是否启用多语言混合生成
 }
 
+// GenerateRepoResponse 返回生成结果。
 type GenerateRepoResponse struct {
-	RepoPath    string `json:"repoPath"`
-	CommitCount int    `json:"commitCount"`
+	RepoPath    string `json:"repoPath"`    // 仓库在本地的临时存储路径
+	CommitCount int    `json:"commitCount"` // 成功生成的总提交数
 }
 
 var repoNameSanitiser = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
 
+// CheckGitInstalledResponse 表示 Git 检测结果。
 type CheckGitInstalledResponse struct {
-	Installed bool   `json:"installed"`
-	Version   string `json:"version"`
+	Installed bool   `json:"installed"` // 是否已安装
+	Version   string `json:"version"`   // Git 版本信息
 }
 
+// SetGitPathRequest 表示设置自定义 Git 路径的请求。
 type SetGitPathRequest struct {
-	GitPath string `json:"gitPath"`
+	GitPath string `json:"gitPath"` // Git 可执行文件路径
 }
 
+// SetGitPathResponse 表示设置 Git 路径的结果。
 type SetGitPathResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Version string `json:"version"`
+	Success bool   `json:"success"` // 是否设置成功
+	Message string `json:"message"` // 状态信息或错误提示
+	Version string `json:"version"` // 设置后的 Git 版本
 }
 
 // CheckGitInstalled checks if Git is installed on the system
@@ -166,7 +174,7 @@ func (a *App) SetGitPath(req SetGitPathRequest) (*SetGitPathResponse, error) {
 	}, nil
 }
 
-// getGitCommand returns the git command to use
+// getGitCommand 获取实际使用的 Git 命令名或路径。
 func (a *App) getGitCommand() string {
 	if a.gitPath != "" {
 		return a.gitPath
@@ -174,7 +182,8 @@ func (a *App) getGitCommand() string {
 	return "git"
 }
 
-// GenerateRepo creates a git repository whose commit history mirrors the given contribution calendar.
+// GenerateRepo 是核心方法，它会根据前端提供的贡献图数据，在本地生成一个具有对应历史记录的 Git 仓库。
+// 该方法使用了 git fast-import 技术以实现极高性能的历史注入。
 func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, error) {
 	// 处理语言配置
 	var languageConfigs []LanguageConfig
@@ -232,11 +241,11 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
 
 	username := strings.TrimSpace(req.GithubUsername)
 	if username == "" {
-		username = "zmrlft"
+		username = "Cail Gainey"
 	}
 	email := strings.TrimSpace(req.GithubEmail)
 	if email == "" {
-		email = "2643895326@qq.com"
+		email = "cailgainey@foxmail.com"
 	}
 
 	if err := os.MkdirAll(a.repoBasePath, 0o755); err != nil {
@@ -299,14 +308,14 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
 		return nil, err
 	}
 
-    // Optimize: use git fast-import to avoid spawning a process per commit.
-    // Also disable slow features for this repo.
+    // 优化：使用git fast-import以避免为每个提交启动一个进程。
+    // 同时禁用此仓库的慢速功能。
     _ = a.runGitCommand(repoPath, "config", "commit.gpgsign", "false")
     _ = a.runGitCommand(repoPath, "config", "gc.auto", "0")
     _ = a.runGitCommand(repoPath, "config", "core.autocrlf", "false")
-    _ = a.runGitCommand(repoPath, "config", "core.fsyncObjectFiles", "false")
+    _ = a.runGitCommand(repoPath, "config", "core.fsync", "none")
 
-    // Sort contributions by date ascending to produce chronological history
+    // 按日期升序排序贡献以生成时间线历史
     contribs := make([]ContributionDay, 0, len(req.Contributions))
     for _, c := range req.Contributions {
         if c.Count > 0 {
@@ -315,9 +324,9 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
     }
     sort.Slice(contribs, func(i, j int) bool { return contribs[i].Date < contribs[j].Date })
 
-    // Build fast-import stream
+    // 构建fast-import流
     var stream bytes.Buffer
-    // Create README blob once and mark it
+    // 创建README blob并标记它
     fmt.Fprintf(&stream, "blob\nmark :1\n")
     fmt.Fprintf(&stream, "data %d\n%s\n", len(readmeContent), readmeContent)
 
@@ -333,23 +342,23 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
         for i := 0; i < day.Count; i++ {
             // 根据比例选择语言
             selectedLang := selectLanguageByRatio(languageConfigs, totalCommits)
-            template := GetLanguageTemplate(LanguageType(selectedLang))
+            template := languages.GetLanguageTemplate(languages.LanguageType(selectedLang))
             
             // 使用语言模板生成代码内容
             codeContent := template.GenerateCode(day.Date, i+1, day.Count)
 
-            // Emit blob for code file
+            // 发射代码文件的blob
             fmt.Fprintf(&stream, "blob\nmark :%d\n", nextMark)
             fmt.Fprintf(&stream, "data %d\n", len(codeContent))
             stream.WriteString(codeContent)
             stream.WriteString("\n")
 
             // 获取代码文件路径（相对于仓库根目录）
-            codeFilePath := getCodeFilePath("", LanguageType(selectedLang), day.Date, i+1)
+            codeFilePath := languages.GetCodeFilePath("", languages.LanguageType(selectedLang), day.Date, i+1)
             // 只需要相对路径，去掉开头的路径分隔符
             codeFilePath = strings.TrimPrefix(codeFilePath, string(filepath.Separator))
 
-            // Emit commit that points to README (:1) and code file (:nextMark)
+            // 发射提交，指向README (:1)和代码文件 (:nextMark)
             commitTime := parsedDate.Add(time.Duration(i) * time.Second)
             secs := commitTime.Unix()
             tz := commitTime.Format("-0700")
@@ -367,18 +376,20 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
     }
     stream.WriteString("done\n")
 
-    // Feed stream to fast-import
+    // 将流发送到fast-import
     if totalCommits > 0 {
         if err := a.runGitFastImport(repoPath, &stream); err != nil {
             return nil, fmt.Errorf("fast-import failed: %w", err)
         }
-        // Update working tree to the generated branch for user convenience
+        // 更新工作目录到生成的分支，为用户方便
         _ = a.runGitCommand(repoPath, "checkout", "-f", "main")
     }
 
+	/* 
 	if err := openDirectory(repoPath); err != nil {
 		return nil, fmt.Errorf("open repo directory: %w", err)
 	}
+	*/
 
 	LogInfo("仓库生成成功", 
 		zap.String("repo_path", repoPath),
@@ -391,17 +402,19 @@ func (a *App) GenerateRepo(req GenerateRepoRequest) (*GenerateRepoResponse, erro
 	}, nil
 }
 
+// ExportContributionsRequest 定义导出请求。
 type ExportContributionsRequest struct {
 	Contributions []ContributionDay `json:"contributions"`
 }
 
+// ExportContributionsResponse 定义导出结果。
 type ExportContributionsResponse struct {
-	Success  bool   `json:"success"`
-	Message  string `json:"message"`
-	FilePath string `json:"filePath"`
+	Success  bool   `json:"success"`  // 是否成功
+	Message  string `json:"message"`  // 详细信息
+	FilePath string `json:"filePath"` // 导出的文件路径
 }
 
-// ExportContributions exports the current contributions to a JSON file.
+// ExportContributions 将当前的贡献图数据导出为 JSON 文件。
 func (a *App) ExportContributions(req ExportContributionsRequest) (*ExportContributionsResponse, error) {
 	LogInfo("开始导出贡献数据", zap.Int("count", len(req.Contributions)))
 	
@@ -448,11 +461,12 @@ func (a *App) ExportContributions(req ExportContributionsRequest) (*ExportContri
 	}, nil
 }
 
+// ImportContributionsResponse 定义导入结果。
 type ImportContributionsResponse struct {
-	Contributions []ContributionDay `json:"contributions"`
+	Contributions []ContributionDay `json:"contributions"` // 导入的贡献数据
 }
 
-// ImportContributions imports contributions from a JSON file.
+// ImportContributions 从本地 JSON 文件导入贡献图数据。
 func (a *App) ImportContributions() (*ImportContributionsResponse, error) {
 	LogInfo("开始导入贡献数据")
 	
@@ -489,6 +503,7 @@ func (a *App) ImportContributions() (*ImportContributionsResponse, error) {
 	return &ImportContributionsResponse{Contributions: contributions}, nil
 }
 
+// sanitiseRepoName 清理仓库名称，使其符合 Git 和 GitHub 的命名规范。
 func sanitiseRepoName(input string) string {
 	input = strings.TrimSpace(input)
 	if input == "" {
@@ -505,6 +520,7 @@ func sanitiseRepoName(input string) string {
 	return input
 }
 
+// runGitCommand 在指定目录执行 Git 命令。
 func (a *App) runGitCommand(dir string, args ...string) error {
 	gitCmd := a.getGitCommand()
 	cmd := exec.Command(gitCmd, args...)
@@ -521,7 +537,7 @@ func (a *App) runGitCommand(dir string, args ...string) error {
 	return nil
 }
 
-// runGitFastImport runs `git fast-import` with the given stream as stdin.
+// runGitFastImport 通过标准输入运行 `git fast-import` 命令，直接注入提交历史。
 func (a *App) runGitFastImport(dir string, r *bytes.Buffer) error {
     gitCmd := a.getGitCommand()
     cmd := exec.Command(gitCmd, "fast-import", "--quiet")

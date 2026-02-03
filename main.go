@@ -1,3 +1,5 @@
+// main 包是 GreenWall 应用程序的入口。
+// GreenWall 是一个用于自定义 GitHub 贡献图的工具。
 package main
 
 import (
@@ -12,6 +14,8 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// main 是应用程序的主进入点。
+// 它负责初始化日志系统、创建应用实例，并启动 Wails 框架渲染前端界面。
 func main() {
 	// 初始化日志系统
 	if err := InitLogger(); err != nil {
@@ -28,7 +32,7 @@ func main() {
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:  "GreenWall",
-		Width:  900,
+		Width:  1100,
 		Height: 650,
 		AssetServer: &assetserver.Options{
 			Assets: assets,

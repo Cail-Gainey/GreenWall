@@ -3,87 +3,86 @@ package main
 import (
 	"fmt"
 	"strings"
-	
+
 	"go.uber.org/zap"
+	"green-wall/templates/languages"
 )
 
-// getLanguageCodeBytes 获取每种语言生成的平均代码字节数
-// GitHub使用Linguist统计语言比例，基于的是字节数而不是行数
-// 这个函数用于计算GitHub语言统计的权重
-// 注意：这些数值是通过实际测量生成的代码得出的
+// getLanguageCodeBytes 获取每种语言生成的平均代码字节数。
+// GitHub 使用 Linguist 工具根据文件字节数（而非代码行数）来统计仓库的语言比例。
+// 为了保证生成的仓库在 GitHub 上的语言百分比与用户预设的一致，我们需要知道每种语言模板产生的代码量权重。
 func getLanguageCodeBytes(lang string) int {
-	// 基于实际生成的代码字节数（精确测量）
-	// 字节数 ≈ 行数 × 平均每行字符数
-	switch LanguageType(lang) {
-	case "java":
-		return 650 // Java类定义约650字节
-	case "python":
-		return 650 // Python类定义约650字节
-	case "javascript":
-		return 550 // JavaScript类约550字节
-	case "typescript":
-		return 950 // TypeScript类约950字节（包含interface和export）
-	case "go":
-		return 850 // Go结构体约850字节（包含package和import）
-	case "rust":
-		return 800 // Rust结构体约800字节
-	case "cpp":
-		return 750 // C++类约750字节
-	case "c":
-		return 550 // C结构体约550字节
-	case "csharp":
-		return 720 // C#类约720字节
-	case "php":
-		return 620 // PHP类约620字节
-	case "ruby":
-		return 600 // Ruby类约600字节
-	case "swift":
-		return 650 // Swift结构体约650字节
-	case "kotlin":
-		return 720 // Kotlin类约720字节
-	case "shell":
-		return 450 // Shell脚本约450字节
-	case "vue":
-		return 1300 // Vue组件约1300字节（template+script+style）
-	case "html":
-		return 900 // HTML页面约900字节
-	case "css":
-		return 700 // CSS样式约700字节（包含伪元素）
-	case "scss":
-		return 750 // SCSS样式约750字节（包含嵌套）
-	case "sql":
-		return 500 // SQL脚本约500字节
-	case "markdown":
-		return 30  // Markdown约30字节（一行简短文本）
+	// 基于实际生成的代码字节数（精确测量，字节数 ≈ 行数 × 平均每行字符数）
+	switch languages.LanguageType(lang) {
+	case languages.LangJava:
+		return 650 // Java 类定义约 650 字节
+	case languages.LangPython:
+		return 650 // Python 类定义约 650 字节
+	case languages.LangJavaScript:
+		return 550 // JavaScript 类约 550 字节
+	case languages.LangTypeScript:
+		return 950 // TypeScript 类约 950 字节（包含 interface 和 export）
+	case languages.LangGo:
+		return 850 // Go 结构体约 850 字节（包含 package 和 import）
+	case languages.LangRust:
+		return 800 // Rust 结构体约 800 字节
+	case languages.LangCpp:
+		return 750 // C++ 类约 750 字节
+	case languages.LangC:
+		return 550 // C 结构体约 550 字节
+	case languages.LangCSharp:
+		return 720 // C# 类约 720 字节
+	case languages.LangPHP:
+		return 620 // PHP 类约 620 字节
+	case languages.LangRuby:
+		return 600 // Ruby 类约 600 字节
+	case languages.LangSwift:
+		return 650 // Swift 结构体约 650 字节
+	case languages.LangKotlin:
+		return 720 // Kotlin 类约 720 字节
+	case languages.LangShell:
+		return 450 // Shell 脚本约 450 字节
+	case languages.LangVue:
+		return 1300 // Vue 组件约 1300 字节（template+script+style）
+	case languages.LangHTML:
+		return 900 // HTML 页面约 900 字节
+	case languages.LangCSS:
+		return 700 // CSS 样式约 700 字节
+	case languages.LangSCSS:
+		return 750 // SCSS 样式约 750 字节
+	case languages.LangSQL:
+		return 500 // SQL 脚本约 500 字节
+	case languages.LangMarkdown:
+		return 30  // Markdown 约 30 字节
 	default:
-		return 500 // 默认500字节
+		return 500 // 默认值
 	}
 }
 
-// LanguageConfig 语言配置
+// LanguageConfig 定义了某种语言在混合模式下的目标占比。
 type LanguageConfig struct {
-	Language string `json:"language"` // 语言类型
-	Ratio    int    `json:"ratio"`    // 比例(百分比)
+	Language string `json:"language"` // 编程语言标识符
+	Ratio    int    `json:"ratio"`    // 预期的所占比例 (0-100)
 }
 
-// generateMultiLanguageReadme 生成多语言README
+// generateMultiLanguageReadme 为多语言混合仓库生成 README.md 内容。
 func generateMultiLanguageReadme(repoName string, languageConfigs []LanguageConfig) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("# %s\n\n", repoName))
-	sb.WriteString("Generated with [GreenWall](https://github.com/zmrlft/GreenWall).\n\n")
+	sb.WriteString("Generated with [GreenWall](https://github.com/Cail-Gainey/GreenWall).\n\n")
 	
-	// 如果只有一种语言，使用该语言的模板README
+	// 如果只有一种语言，降级使用该语言的专属模板
 	if len(languageConfigs) == 1 {
-		template := GetLanguageTemplate(LanguageType(languageConfigs[0].Language))
+		template := languages.GetLanguageTemplate(languages.LanguageType(languageConfigs[0].Language))
 		return template.GetReadmeContent(repoName)
 	}
 	
-	// 多语言README
+	// 多语言说明部分
 	sb.WriteString("## Languages\n\n")
 	sb.WriteString("This repository contains contributions in multiple programming languages:\n\n")
 	
 	for _, config := range languageConfigs {
-		template := GetLanguageTemplate(LanguageType(config.Language))
+		template := languages.GetLanguageTemplate(languages.LanguageType(config.Language))
 		sb.WriteString(fmt.Sprintf("- **%s** (%d%%)\n", template.GetLanguageName(), config.Ratio))
 	}
 	
@@ -95,16 +94,10 @@ func generateMultiLanguageReadme(repoName string, languageConfigs []LanguageConf
 	return sb.String()
 }
 
-// selectLanguageByRatio 根据比例选择语言
-// 使用加权轮询算法，考虑每种语言的代码行数，确保GitHub统计的比例与预设比例一致
-// 
-// 算法原理：
-// 1. 根据每种语言的代码行数计算权重
-// 2. 调整比例以补偿代码行数差异
-// 3. 使用调整后的比例进行轮询分配
-// 
-// 示例：Java(50%, 20行), Vue(30%, 30行), CSS(5%, 10行), JavaScript(15%, 15行)
-// 权重调整后确保GitHub统计的比例接近预设值
+// selectLanguageByRatio 采用加权轮询法，根据目标比例为当前的 commit 索引挑选合适的语言。
+// 这里的关键是引入了“代码量补偿机制”：
+// 因为 GitHub 以字节数统计比例，所以产生代码量大的语言（如 Vue）会占据更多的权重，
+// 该算法通过调整分配概率，确保 GitHub 最终统计出来的饼图与用户设置的期望比例一致。
 func selectLanguageByRatio(languageConfigs []LanguageConfig, commitIndex int) string {
 	if len(languageConfigs) == 0 {
 		return "markdown"
@@ -114,10 +107,10 @@ func selectLanguageByRatio(languageConfigs []LanguageConfig, commitIndex int) st
 		return languageConfigs[0].Language
 	}
 	
-	// 计算加权比例（考虑代码行数）
+	// 计算补偿后的分配权重
 	type weightedConfig struct {
 		language string
-		weight   int // 权重 = 期望比例 / 代码行数
+		weight   int // 权重 = (期望比例 / 代码量常数)
 	}
 	
 	var weighted []weightedConfig
@@ -127,12 +120,11 @@ func selectLanguageByRatio(languageConfigs []LanguageConfig, commitIndex int) st
 		if config.Ratio <= 0 {
 			continue
 		}
-		// 权重 = 期望比例 * 100 / 代码字节数
-		// 这样代码字节数多的语言会得到更少的提交次数
+		// 补偿公式：权重 = 目标比例 * 10000 / 每提交平均字节数
+		// 字节数越大的语言，其分配到的提交频率越高，从而在总量上占据正确的字节百分比。
 		bytes := getLanguageCodeBytes(config.Language)
-		weight := (config.Ratio * 100) / bytes
+		weight := (config.Ratio * 10000) / bytes
 		
-		// 确保权重至少为1
 		if weight < 1 {
 			weight = 1
 		}
@@ -148,10 +140,8 @@ func selectLanguageByRatio(languageConfigs []LanguageConfig, commitIndex int) st
 		return languageConfigs[0].Language
 	}
 	
-	// 将commitIndex映射到[0, totalWeight)的范围内
+	// 轮询定位
 	position := commitIndex % totalWeight
-	
-	// 累积权重匹配
 	cumulative := 0
 	for _, wc := range weighted {
 		cumulative += wc.weight
@@ -160,11 +150,10 @@ func selectLanguageByRatio(languageConfigs []LanguageConfig, commitIndex int) st
 		}
 	}
 	
-	// 默认返回第一个语言（理论上不会到达这里）
 	return weighted[0].language
 }
 
-// validateLanguageConfigs 验证语言配置的有效性
+// validateLanguageConfigs 检查传入的多语言配置是否合法。
 func validateLanguageConfigs(languageConfigs []LanguageConfig) error {
 	if len(languageConfigs) == 0 {
 		return fmt.Errorf("至少需要配置一种语言")
@@ -181,23 +170,20 @@ func validateLanguageConfigs(languageConfigs []LanguageConfig) error {
 		}
 		
 		if config.Ratio > 100 {
-			return fmt.Errorf("语言配置[%d]: 单个语言比例不能超过100%%", i)
+			return fmt.Errorf("语言配置[%d]: 单个语言比例不能超过 100%%", i)
 		}
 		
 		totalRatio += config.Ratio
 	}
 	
 	if totalRatio == 0 {
-		return fmt.Errorf("语言比例总和不能为0")
+		return fmt.Errorf("语言比例总和不能为 0")
 	}
-	
-	// 注意：总和不一定要等于100，算法会自动按比例分配
 	
 	return nil
 }
 
-// normalizeLanguageConfigs 标准化语言配置
-// 如果总比例不是100，会按比例调整
+// normalizeLanguageConfigs 对语言比例进行标准化处理，使其总和接近 100。
 func normalizeLanguageConfigs(languageConfigs []LanguageConfig) []LanguageConfig {
 	if len(languageConfigs) == 0 {
 		return []LanguageConfig{{Language: "markdown", Ratio: 100}}
@@ -208,12 +194,10 @@ func normalizeLanguageConfigs(languageConfigs []LanguageConfig) []LanguageConfig
 		totalRatio += config.Ratio
 	}
 	
-	// 如果总和已经是100或接近100，直接返回
 	if totalRatio >= 95 && totalRatio <= 105 {
 		return languageConfigs
 	}
 	
-	// 否则按比例标准化到100
 	normalized := make([]LanguageConfig, len(languageConfigs))
 	for i, config := range languageConfigs {
 		normalized[i] = LanguageConfig{
@@ -225,31 +209,29 @@ func normalizeLanguageConfigs(languageConfigs []LanguageConfig) []LanguageConfig
 	return normalized
 }
 
-// mergeAdditionalFiles 合并多个语言的额外文件
-// 处理文件冲突，优先保留第一个出现的文件
+// mergeAdditionalFiles 聚合多语言模板产生的所有额外文件。
+// 如果不同语言对同一个路径产生了冲突文件，该方法会自动为后来的语言文件添加后缀，以防相互覆盖。
 func mergeAdditionalFiles(repoName string, languageConfigs []LanguageConfig) map[string]string {
 	allFiles := make(map[string]string)
 	fileOwners := make(map[string]string) // 记录文件归属
 	
 	for _, langConfig := range languageConfigs {
-		template := GetLanguageTemplate(LanguageType(langConfig.Language))
+		template := languages.GetLanguageTemplate(languages.LanguageType(langConfig.Language))
 		files := template.GetAdditionalFiles(repoName)
 		
 		for filePath, content := range files {
-			// 如果文件已存在，检查是否冲突
 			if existingContent, exists := allFiles[filePath]; exists {
-				// 如果内容相同，跳过
 				if existingContent == content {
 					continue
 				}
 				
-				// 如果内容不同，为后来的语言创建带前缀的文件
+				// 路径冲突：为后来的文件分配带语言标识符的后缀名
 				owner := fileOwners[filePath]
 				newPath := fmt.Sprintf("%s.%s", filePath, langConfig.Language)
 				allFiles[newPath] = content
 				fileOwners[newPath] = langConfig.Language
 				
-				LogInfo("文件冲突，创建语言特定文件",
+				LogInfo("检测到文件路径冲突，进行重命名",
 					zap.String("original", filePath),
 					zap.String("owner", owner),
 					zap.String("new_file", newPath),
