@@ -26,6 +26,10 @@ export function GetGitPath() {
   return window['go']['main']['App']['GetGitPath']();
 }
 
+export function GetRepoBranches(arg1, arg2) {
+  return window['go']['main']['App']['GetRepoBranches'](arg1, arg2);
+}
+
 export function GetSupportedLanguagesAPI() {
   return window['go']['main']['App']['GetSupportedLanguagesAPI']();
 }

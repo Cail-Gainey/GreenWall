@@ -5,7 +5,21 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Open Sans', 'sans-serif'],
+        display: ['Poppins', 'sans-serif'],
+      },
+      colors: {
+        slate: {
+          800: '#1E293B',
+          900: '#0F172A',
+        },
+        brand: {
+          green: '#22C55E'
+        }
+      }
+    },
   },
   plugins: [],
 }

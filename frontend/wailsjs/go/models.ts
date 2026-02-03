@@ -252,6 +252,7 @@ export namespace main {
 	export class PushRepoRequest {
 	    repoPath: string;
 	    repoName: string;
+	    branch: string;
 	    isNewRepo: boolean;
 	    isPrivate: boolean;
 	    forcePush: boolean;
@@ -265,6 +266,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.repoPath = source["repoPath"];
 	        this.repoName = source["repoName"];
+	        this.branch = source["branch"];
 	        this.isNewRepo = source["isNewRepo"];
 	        this.isPrivate = source["isPrivate"];
 	        this.forcePush = source["forcePush"];

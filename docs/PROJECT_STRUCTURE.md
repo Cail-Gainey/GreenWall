@@ -19,8 +19,12 @@ GreenWall/
 ├── frontend/                   # 前端代码
 │   ├── src/                   # 源代码
 │   │   ├── components/        # React组件
+│   │   │   ├── Editor/       # 编辑器核心组件
+│   │   │   └── ...           # 其他通用组件
+│   │   ├── layouts/           # 页面布局
 │   │   ├── i18n.tsx          # 国际化配置
 │   │   ├── App.tsx           # 主应用组件
+│   │   ├── types.ts          # 类型定义
 │   │   └── main.tsx          # 入口文件
 │   ├── dist/                  # 构建输出（gitignore）
 │   ├── package.json           # 前端依赖
@@ -29,15 +33,20 @@ GreenWall/
 ├── logs/                       # 日志目录（gitignore）
 │   └── YYYY-MM-DD.log         # 按日期分割的日志
 │
-├── scripts/                    # 脚本目录（预留）
+├── templates/                  # 代码模板目录
+│   └── languages/             # 各编程语言模板实现
+│       ├── factory.go         # 模板工厂
+│       ├── language_interface.go # 模板接口定义
+│       └── [lang].go          # 具体语言模板 (Go, Python, etc.)
 │
-├── app.go                      # 应用主逻辑
-├── github.go                   # GitHub API交互
-├── logger.go                   # 日志系统
-├── main.go                     # 程序入口
-├── oauth.go                    # OAuth认证
-├── open_directory.go           # 目录操作
-├── cmd_*.go                    # 平台特定命令
+├── app.go                      # 应用主逻辑 (Wails Binding)
+├── github.go                   # GitHub API交互 (仓库管理、分支获取)
+├── multi_language.go           # 多语言仓库生成逻辑
+├── oauth.go                    # OAuth认证与Token管理
+├── logger.go                   # 结构化日志系统
+├── main.go                     # 程序入口与Wails初始化
+├── open_directory.go           # 跨平台目录操作
+├── cmd_*.go                    # 平台特定命令执行
 │
 ├── oauth_config.example.json   # OAuth配置示例
 ├── oauth_config.json           # OAuth配置（gitignore）
@@ -57,24 +66,26 @@ GreenWall/
 
 ### 后端（Go）
 
-| 文件 | 说明 | 主要功能 |
+| 文件/目录 | 说明 | 主要功能 |
 |------|------|---------|
-| `main.go` | 程序入口 | 初始化日志、启动Wails应用 |
-| `app.go` | 应用逻辑 | Git操作、仓库生成、数据导入导出 |
-| `oauth.go` | OAuth认证 | GitHub登录、Token管理、用户信息 |
-| `github.go` | GitHub API | 仓库创建、推送、Token验证 |
-| `logger.go` | 日志系统 | Zap日志、文件输出、结构化日志 |
-| `open_directory.go` | 系统操作 | 打开文件夹 |
-| `cmd_*.go` | 平台命令 | 不同平台的命令执行 |
+| `main.go` | 程序入口 | 初始化日志、启动Wails应用、窗口配置 |
+| `app.go` | 应用绑定 | 处理前端请求、Git仓库初始化、导入导出逻辑 |
+| `multi_language.go` | 生成引擎 | 实现多语言混合生成、权重计算、文件比例控制 |
+| `templates/` | 代码模板 | 提供20+种编程语言的模拟代码生成模板 |
+| `oauth.go` | OAuth认证 | GitHub登录、Token持久化、用户信息管理 |
+| `github.go` | GitHub API | 仓库创建/查找、**自动获取分支列表**、强制推送覆盖 |
+| `logger.go` | 日志系统 | 基于Zap的高性能结构化日志 |
+| `open_directory.go` | 系统操作 | 跨平台打开文件夹路径 |
 
 ### 前端（React + TypeScript）
 
 | 目录/文件 | 说明 |
 |----------|------|
-| `src/components/` | UI组件 |
-| `src/i18n.tsx` | 国际化（中英文） |
-| `src/App.tsx` | 主应用 |
-| `src/main.tsx` | 入口 |
+| `src/components/Editor/` | 画布、网格、工具栏等编辑器核心组件 |
+| `src/components/PushRepoDialog.tsx` | 推送配置对话框（支持分支、隐私、多语言、强制覆盖等） |
+| `src/layouts/` | 页面基础布局管理 |
+| `src/i18n.tsx` | 强类型国际化翻译系统 |
+| `src/types.ts` | 全局 TypeScript 类型定义 |
 
 ### 配置文件
 
@@ -83,48 +94,23 @@ GreenWall/
 | `oauth_config.json` | OAuth真实配置 | ❌ 不提交（敏感） |
 | `oauth_config.example.json` | OAuth示例配置 | ✅ 提交 |
 | `wails.json` | Wails配置 | ✅ 提交 |
-| `go.mod` | Go依赖 | ✅ 提交 |
-| `package.json` | 前端依赖 | ✅ 提交 |
 
 ## 构建流程
 
 ### 本地开发
 ```bash
-# 开发模式
+# 开发模式（实时热更新）
 wails dev
 
 # 生产构建
 wails build
 ```
 
-### CI/CD
-1. GitHub Actions触发
-2. 从Secrets创建OAuth配置（可选）
-3. 安装依赖
-4. 构建前端
-5. 构建应用
-6. 打包发布
-
-## 日志系统
-
-- **位置**: `logs/YYYY-MM-DD.log`
-- **格式**: JSON结构化日志
-- **级别**: Debug, Info, Warn, Error, Fatal
-- **输出**: 文件 + 控制台
-
-## 配置嵌入
-
-使用Go embed将配置文件嵌入到二进制：
-
-```go
-//go:embed oauth_config.json oauth_config.example.json
-var embeddedFS embed.FS
-```
-
-优先级：
-1. 外部配置文件（多个路径）
-2. 嵌入的`oauth_config.json`
-3. 嵌入的`oauth_config.example.json`
+### 功能特性
+- **强制覆盖 (Force Push)**：直接重置远程分支历史，确保贡献图精准更新。
+- **分支感知**：自动拉取并匹配 GitHub 远程分支（main/master）。
+- **多语言混合**：自定义不同模式的文件生成比例，模拟真实开发者行为。
+- **防止误操作**：生成前检测本地数据，防止推送空仓库。
 
 ## 国际化
 
@@ -132,4 +118,4 @@ var embeddedFS embed.FS
 - 🇺🇸 English
 - 🇨🇳 中文
 
-配置文件：`frontend/src/i18n.tsx`
+配置文件：`frontend/src/i18n.tsx` (动态上下文驱动)

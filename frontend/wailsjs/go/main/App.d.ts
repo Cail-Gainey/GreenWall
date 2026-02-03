@@ -14,6 +14,8 @@ export function GenerateRepo(arg1:main.GenerateRepoRequest):Promise<main.Generat
 
 export function GetGitPath():Promise<string>;
 
+export function GetRepoBranches(arg1:string,arg2:string):Promise<Array<string>>;
+
 export function GetSupportedLanguagesAPI():Promise<Array<Record<string, string>>>;
 
 export function GetUserRepos():Promise<Array<main.GitHubRepo>>;

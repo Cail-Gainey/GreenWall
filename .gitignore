@@ -1,60 +1,82 @@
-# 构建输出
-build/bin/
-build/darwin/
-build/windows/
-build/linux/
+# === 构建与二进制文件 ===
+build/
 *.app
 *.exe
 *.dmg
 *.pkg
 *.deb
 *.rpm
+bin/
+obj/
 
-# 前端
-node_modules/
+# === 前端 (React/Vite/Node) ===
 frontend/dist/
 frontend/.vite/
 frontend/node_modules/
-.pnpm-store/
-.npm/
-.yarn/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+frontend/.pnpm-store/
+frontend/npm/
+frontend/yarn/
+frontend/package-lock.json
+frontend/yarn.lock
+frontend/pnpm-lock.yaml
+frontend/package.json.md5
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
 
-# OAuth配置文件（包含敏感信息）
+# === Go ===
+*.test
+*.out
+vendor/
+go.work
+go.work.sum
+*.cover
+coverage.txt
+coverage.html
+
+# === Wails ===
+wails.json.bak
+.wails/
+frontend/wailsjs/
+
+# === 敏感信息与环境配置 ===
 oauth_config.json
 .env
 .env.local
 .env.*.local
+*.pem
+*.key
+*.pub
 
-# 日志文件
+# === 日志与数据 ===
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# 用户数据和缓存
 user.json
 .cache/
 *.db
 *.sqlite
 *.sqlite3
 
-# IDE和编辑器
+# === IDE 与 编辑器 ===
 .vscode/
 .idea/
+.DS_Store
 *.swp
 *.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.user
 *~
 .project
 .classpath
 .settings/
 *.sublime-*
 
+# === 操作系统特定文件 ===
 # macOS
-.DS_Store
 .AppleDouble
 .LSOverride
 Icon
@@ -74,34 +96,14 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # Linux
-*~
 .directory
 .Trash-*
 
-# 临时文件
+# === 临时文件与 Git 遗留 ===
 tmp/
 temp/
 *.tmp
 *.bak
-*.swp
-*.swo
-
-# Go
-*.test
-*.out
-vendor/
-go.work
-go.work.sum
-*.cover
-coverage.txt
-coverage.html
-
-# Wails
-wails.json.bak
-.wails/
-frontend/wailsjs/
-
-# Git
 *.orig
 *.rej
 .git-rewrite/

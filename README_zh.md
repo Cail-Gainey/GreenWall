@@ -47,7 +47,7 @@ MIT License
 ## 👏 致谢
 
 Fork 自 [zmrlft/GreenWall](https://github.com/zmrlft/GreenWall)，增强功能包括：
-- 多语言支持
+- 多编程语言支持
 - 语言统计控制
 - 深色模式
 - OAuth 2.0 集成
